@@ -1,6 +1,6 @@
 /**
  * 路由配置
- * 两个主视图：思维导图 和 任务列表
+ * 项目级路由：/project/:projectId/mindmap 和 /project/:projectId/tasks
  */
 import { createRouter, createWebHistory } from 'vue-router'
 
@@ -9,22 +9,32 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/mindmap',
+      redirect: () => '/mindmap',
     },
     {
-      path: '/mindmap',
+      path: '/project/:projectId/mindmap',
       name: 'MindMap',
       component: () => import('@/views/MindMapView.vue'),
     },
     {
-      path: '/tasks',
+      path: '/project/:projectId/tasks',
       name: 'Tasks',
       component: () => import('@/views/TaskListView.vue'),
     },
+    // 兼容旧路由（无 projectId）
     {
-      // 404 catch-all：跳转到思维导图
+      path: '/mindmap',
+      name: 'MindMapDefault',
+      component: () => import('@/views/MindMapView.vue'),
+    },
+    {
+      path: '/tasks',
+      name: 'TasksDefault',
+      component: () => import('@/views/TaskListView.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
-      redirect: '/mindmap',
+      redirect: '/',
     },
   ],
 })

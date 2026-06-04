@@ -4,12 +4,14 @@
  */
 
 const DB_NAME = 'todo-pm'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 /** 思维导图数据存储 */
 const STORE_MINDMAP = 'mindmaps'
 /** 任务数据存储 */
 const STORE_TASKS = 'tasks'
+/** 项目数据存储 */
+const STORE_PROJECTS = 'projects'
 
 let dbInstance: IDBDatabase | null = null
 
@@ -27,6 +29,9 @@ function openDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORE_TASKS)) {
         db.createObjectStore(STORE_TASKS, { keyPath: 'id' })
+      if (!db.objectStoreNames.contains(STORE_PROJECTS)) {
+        db.createObjectStore(STORE_PROJECTS, { keyPath: 'id' })
+      }
       }
     }
 
@@ -98,4 +103,4 @@ export async function dbClear(storeName: string): Promise<void> {
   })
 }
 
-export { STORE_MINDMAP, STORE_TASKS }
+export { STORE_MINDMAP, STORE_TASKS, STORE_PROJECTS }
