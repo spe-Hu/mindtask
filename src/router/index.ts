@@ -1,6 +1,6 @@
 /**
  * 路由配置
- * 项目级路由：/project/:projectId/mindmap 和 /project/:projectId/tasks
+ * 项目级路由
  */
 import { createRouter, createWebHistory } from 'vue-router'
 
@@ -21,6 +21,16 @@ const router = createRouter({
       name: 'Tasks',
       component: () => import('@/views/TaskListView.vue'),
     },
+    {
+      path: '/project/:projectId/board',
+      name: 'Board',
+      component: () => import('@/views/BoardView.vue'),
+    },
+    {
+      path: '/project/:projectId/dashboard',
+      name: 'Dashboard',
+      component: () => import('@/views/DashboardView.vue'),
+    },
     // 兼容旧路由（无 projectId）
     {
       path: '/mindmap',
@@ -31,6 +41,16 @@ const router = createRouter({
       path: '/tasks',
       name: 'TasksDefault',
       component: () => import('@/views/TaskListView.vue'),
+    },
+    {
+      path: '/board',
+      name: 'BoardDefault',
+      component: () => import('@/views/BoardView.vue'),
+    },
+    {
+      path: '/dashboard',
+      name: 'DashboardDefault',
+      component: () => import('@/views/DashboardView.vue'),
     },
     {
       path: '/:pathMatch(.*)*',

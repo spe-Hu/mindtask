@@ -157,6 +157,12 @@ export const useMindmapStore = defineStore('mindmap', () => {
     }
   }
 
+
+  /** 获取思维导图数据（用于搜索） */
+  function getMindmapData(): MindMapData | null {
+    return currentData.value
+  }
+
   function exportData(): MindMapData {
     return mindMapInstance.value?.getData?.() || currentData.value
   }
@@ -186,6 +192,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
     syncTaskToNode,
     revertNodeFromTask,
     syncTitleToNode,
+    getMindmapData,
     exportData,
     importData,
   }

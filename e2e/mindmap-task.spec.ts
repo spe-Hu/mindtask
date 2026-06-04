@@ -486,7 +486,7 @@ test.describe('8. 完整闭环可用性', () => {
     await expect(page).toHaveURL(/\/mindmap/);
     await expect(page).toHaveTitle(/ToDo PM/);
     const navLinks = page.locator('.header-nav .nav-link');
-    await expect(navLinks).toHaveCount(2);
+    await expect(navLinks).toHaveCount(4);
     await page.locator('.header-nav .nav-link').filter({ hasText: '任务列表' }).click();
     await page.waitForTimeout(1000);
     await expect(page).toHaveURL(/\/tasks/);
@@ -557,6 +557,6 @@ test.describe('9. 项目管理', () => {
     // 当前项目应该显示导图和任务链接
     const activeItem = page.locator('.project-item--active');
     const viewLinks = activeItem.locator('.view-link');
-    await expect(viewLinks).toHaveCount(2);
+    await expect(viewLinks).toHaveCount(4);
   });
 });

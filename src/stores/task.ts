@@ -240,6 +240,12 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+
+  /** 获取所有任务（跨项目，用于全局搜索） */
+  function getAllTasks(): Task[] {
+    return Array.from(tasks.value.values())
+  }
+
   function getTaskStats() {
     const total = taskList.value.length
     const done = completedTasks.value.length
@@ -273,6 +279,7 @@ export const useTaskStore = defineStore('task', () => {
     getTaskByNodeId,
     syncTitleFromNode,
     registerSyncCallback,
+    getAllTasks,
     getTaskStats,
   }
 })

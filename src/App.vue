@@ -7,6 +7,9 @@ import { useRouter, useRoute } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 import { useTaskStore } from '@/stores/task'
 import { useMindmapStore } from '@/stores/mindmap'
+import { useSearchStore } from '@/stores/search'
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
+import GlobalSearch from '@/components/GlobalSearch.vue'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -14,6 +17,10 @@ const route = useRoute()
 const projectStore = useProjectStore()
 const taskStore = useTaskStore()
 const mindmapStore = useMindmapStore()
+const searchStore = useSearchStore()
+
+// 初始化全局键盘快捷键
+useKeyboardShortcuts()
 
 const showNewProjectDialog = ref(false)
 const newProjectName = ref('')
@@ -116,6 +123,20 @@ async function deleteProject(projectId: string) {
             >
               任务
             </router-link>
+            <router-link
+              :to="getProjectView(project.id, 'board')"
+              class="view-link"
+              :class="{ 'view-link--active': currentView === 'board' }"
+            >
+              看板
+            </router-link>
+            <router-link
+              :to="getProjectView(project.id, 'dashboard')"
+              class="view-link"
+              :class="{ 'view-link--active': currentView === 'dashboard' }"
+            >
+              统计
+            </router-link>
           </div>
           <button
             class="project-item__delete"
@@ -157,6 +178,20 @@ async function deleteProject(projectId: string) {
           >
             任务列表
           </router-link>
+          <router-link
+            :to="getProjectView(projectStore.currentProjectId, 'board')"
+            class="nav-link"
+            active-class="nav-link--active"
+          >
+            看板
+          </router-link>
+          <router-link
+            :to="getProjectView(projectStore.currentProjectId, 'dashboard')"
+            class="nav-link"
+            active-class="nav-link--active"
+          >
+            统计
+          </router-link>
         </nav>
       </header>
       <main class="app-main">
@@ -183,6 +218,8 @@ async function deleteProject(projectId: string) {
         </div>
       </div>
     </Teleport>
+    <!-- 全局搜索对话框 -->
+    <GlobalSearch />
   </div>
 </template>
 
