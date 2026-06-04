@@ -49,8 +49,10 @@ async function getStore(storeName: string, mode: IDBTransactionMode = 'readonly'
 /** 保存一条记录（put = 有则更新，无则新增） */
 export async function dbPut(storeName: string, data: Record<string, unknown>): Promise<void> {
   const store = await getStore(storeName, 'readwrite')
+  // 深拷贝以剥离 Vue 响应式 Proxy，避免 IndexedDB DataCloneError
+  const plain = JSON.parse(JSON.stringify(data))
   return new Promise((resolve, reject) => {
-    const req = store.put(data)
+    const req = store.put(plain)
     req.onsuccess = () => resolve()
     req.onerror = () => reject(req.error)
   })
