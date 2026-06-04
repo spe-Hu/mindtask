@@ -501,3 +501,51 @@ const drawerTask = computed(() => taskStore.getTaskByNodeId(detailTaskId.value))
   color: #5a5a78;
 }
 </style>
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .task-list-view {
+    padding: 8px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .search-bar {
+    width: 100%;
+  }
+
+  .filter-bar {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .filter-btn {
+    flex: 1;
+    min-width: 80px;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .task-card {
+    padding: 12px;
+  }
+
+  .task-card__title {
+    font-size: 14px;
+  }
+
+  .task-card__meta {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}
+
+/* 平板适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .task-card {
+    padding: 14px;
+  }
+}

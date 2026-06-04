@@ -63,7 +63,7 @@ function getProjectView(projectId: string, view: string) {
   return `/project/${projectId}/${view}`
 }
 
-const currentView = ref<'mindmap' | 'tasks'>('mindmap')
+const currentView = ref<'mindmap' | 'tasks' | 'board' | 'dashboard'>('mindmap')
 
 watch(() => route.name, (name) => {
   currentView.value = (name === 'Tasks' || name === 'TasksDefault') ? 'tasks' : 'mindmap'
@@ -489,3 +489,68 @@ async function deleteProject(projectId: string) {
   color: #fff;
 }
 </style>
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 60px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .sidebar.sidebar--expanded {
+    max-height: 400px;
+  }
+
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .toolbar-group {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .nav-tabs {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .nav-tab {
+    flex: 1;
+    min-width: 80px;
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+}
+
+/* 平板适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar {
+    width: 200px;
+  }
+}
+
+/* 触摸优化 */
+@media (hover: none) and (pointer: coarse) {
+  button, .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .task-card, .board-card {
+    min-height: 60px;
+  }
+}

@@ -355,3 +355,46 @@ const drawerTask = computed(() => taskStore.getTaskByNodeId(detailTaskId.value))
   font-size: 14px;
 }
 </style>
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .board-view {
+    padding: 8px;
+  }
+
+  .board-columns {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .board-column {
+    min-height: 200px;
+  }
+
+  .column-header {
+    padding: 10px;
+  }
+
+  .column-title {
+    font-size: 14px;
+  }
+
+  .board-card {
+    padding: 10px;
+  }
+
+  .card-title {
+    font-size: 13px;
+  }
+}
+
+/* 平板适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .board-columns {
+    gap: 12px;
+  }
+
+  .board-card {
+    padding: 11px;
+  }
+}

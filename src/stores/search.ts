@@ -69,7 +69,7 @@ export const useSearchStore = defineStore('search', () => {
         }
       }
       
-      searchNodes(mindmapData.root)
+      searchNodes(mindmapData)
     }
 
     return [...taskResults, ...mindmapResults].slice(0, 10) // Limit to 10 results
