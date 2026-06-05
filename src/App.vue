@@ -105,8 +105,17 @@ async function deleteProject(projectId: string) {
           class="project-item"
           :class="{ 'project-item--active': projectStore.currentProjectId === project.id }"
         >
-          <div class="project-item__name" @click="selectProject(project.id)">
-            {{ project.name }}
+          <div class="project-item__row">
+            <div class="project-item__name" @click="selectProject(project.id)">
+              {{ project.name }}
+            </div>
+            <button
+              class="project-item__delete"
+              @click.stop="deleteProject(project.id)"
+              title="删除项目"
+            >
+              ×
+            </button>
           </div>
           <div class="project-item__views" v-if="projectStore.currentProjectId === project.id">
             <router-link
@@ -138,13 +147,6 @@ async function deleteProject(projectId: string) {
               统计
             </router-link>
           </div>
-          <button
-            class="project-item__delete"
-            @click.stop="deleteProject(project.id)"
-            title="删除项目"
-          >
-            ×
-          </button>
         </div>
       </div>
       <div class="sidebar-footer">
@@ -263,11 +265,10 @@ async function deleteProject(projectId: string) {
 
 .project-item {
   display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  cursor: pointer;
+  flex-direction: column;
+  padding: 6px 12px;
+  cursor: default;
   transition: all 0.15s;
-  position: relative;
 }
 
 .project-item:hover {
@@ -278,6 +279,12 @@ async function deleteProject(projectId: string) {
   background: rgba(102, 126, 234, 0.12);
 }
 
+.project-item__row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
 .project-item__name {
   flex: 1;
   font-size: 14px;
@@ -285,6 +292,7 @@ async function deleteProject(projectId: string) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
 }
 
 .project-item--active .project-item__name {
@@ -295,13 +303,16 @@ async function deleteProject(projectId: string) {
 .project-item__views {
   display: flex;
   gap: 4px;
-  margin-left: 4px;
+  margin-top: 4px;
+  width: 100%;
 }
 
 .view-link {
   font-size: 11px;
+  flex: 1;
+  text-align: center;
   color: #8b8b9e;
-  padding: 2px 6px;
+  padding: 3px 0;
   border-radius: 4px;
   text-decoration: none;
   transition: all 0.15s;
@@ -318,18 +329,18 @@ async function deleteProject(projectId: string) {
 }
 
 .project-item__delete {
-  display: none;
   background: none;
   border: none;
   color: #f56c6c;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
-  padding: 0 4px;
-  margin-left: 4px;
+  padding: 2px 6px;
+  opacity: 0;
+  flex-shrink: 0;
 }
 
 .project-item:hover .project-item__delete {
-  display: block;
+  opacity: 1;
 }
 
 .sidebar-footer {

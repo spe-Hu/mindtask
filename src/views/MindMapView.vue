@@ -296,8 +296,13 @@ function initMindMap(el: HTMLElement, hasData: boolean) {
     })
 
     // 刷新已有任务节点的视觉样式（从 IndexedDB 恢复后）
+    // 自动选中根节点，使方向键导航可用
     nextTick(() => {
       refreshTaskNodeStyles()
+      const rootNode = instance.renderer?.root
+      if (rootNode) {
+        instance.execCommand('GO_TARGET_NODE', rootNode)
+      }
     })
   }).catch(err => {
     console.error('Failed to load simple-mind-map:', err)
@@ -438,6 +443,12 @@ function onViewTaskDetail() {
   }
 }
 
+/** 从右侧面板打开任务详情 */
+function openTaskFromSidebar(taskId: string) {
+  detailTaskId.value = taskId
+  showTaskDetail.value = true
+}
+
 /** 将任务节点转回普通节点 */
 async function onRevertNode() {
   hideContextMenu()
@@ -557,8 +568,38 @@ type TaskStatus = import('@/types/task').TaskStatus
       </div>
     </div>
 
-    <!-- 思维导图容器 -->
-    <div ref="mindmapEl" class="mindmap-container"></div>
+    <!-- 主体区域：思维导图 + 右侧任务面板 -->
+    <div class="mindmap-body">
+      <div ref="mindmapEl" class="mindmap-container"></div>
+
+      <!-- 右侧常驻任务面板 -->
+      <aside class="task-sidebar">
+        <div class="task-sidebar__header">
+          <span class="task-sidebar__title">任务列表</span>
+          <el-tag size="small" type="info">{{ taskStore.taskList.length }}</el-tag>
+        </div>
+        <div class="task-sidebar__list">
+          <div
+            v-for="task in taskStore.taskList"
+            :key="task.id"
+            class="task-sidebar__item"
+            :class="`task-sidebar__item--${task.priority}`"
+            @click="openTaskFromSidebar(task.id)"
+          >
+            <div class="task-sidebar__item-title">{{ task.title }}</div>
+            <div class="task-sidebar__item-meta">
+              <span class="task-sidebar__status" :class="`task-sidebar__status--${task.status}`">
+                {{ task.status === 'done' ? '✓' : task.status === 'doing' ? '●' : '○' }}
+              </span>
+              <span v-if="task.dueDate" class="task-sidebar__date">{{ task.dueDate }}</span>
+            </div>
+          </div>
+          <div v-if="taskStore.taskList.length === 0" class="task-sidebar__empty">
+            暂无任务，选中节点后点击"转为任务"
+          </div>
+        </div>
+      </aside>
+    </div>
 
     <!-- 右键菜单 -->
     <Teleport to="body">
@@ -694,9 +735,115 @@ type TaskStatus = import('@/types/task').TaskStatus
   flex: 1;
 }
 
+/* 主体区域：导图 + 右侧面板 */
+.mindmap-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
 .mindmap-container {
   flex: 1;
   overflow: hidden;
+  min-width: 0;
+}
+
+/* 右侧任务面板 */
+.task-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: #16162a;
+  border-left: 1px solid #2d2d44;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.task-sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid #2d2d44;
+}
+
+.task-sidebar__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #b0b0c8;
+}
+
+.task-sidebar__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.task-sidebar__item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.15s;
+}
+
+.task-sidebar__item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.task-sidebar__item--high {
+  border-left-color: #F56C6C;
+}
+
+.task-sidebar__item--medium {
+  border-left-color: #E6A23C;
+}
+
+.task-sidebar__item--low {
+  border-left-color: #67C23A;
+}
+
+.task-sidebar__item-title {
+  font-size: 13px;
+  color: #e0e0f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-sidebar__item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.task-sidebar__status {
+  font-size: 11px;
+}
+
+.task-sidebar__status--done {
+  color: #67C23A;
+}
+
+.task-sidebar__status--doing {
+  color: #E6A23C;
+}
+
+.task-sidebar__status--todo {
+  color: #8b8b9e;
+}
+
+.task-sidebar__date {
+  font-size: 11px;
+  color: #8b8b9e;
+}
+
+.task-sidebar__empty {
+  padding: 24px 12px;
+  font-size: 12px;
+  color: #6b6b80;
+  text-align: center;
+  line-height: 1.5;
 }
 
 /* 右键菜单 */
