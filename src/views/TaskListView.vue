@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useTaskStore } from '@/stores/task'
+import { useLocaleStore } from '@/stores/locale'
 import type { Task, TaskFilterType, TaskPriority, TaskStatus } from '@/types/task'
 import TaskDetailPanel from '@/components/task/TaskDetailPanel.vue'
 
 const taskStore = useTaskStore()
+const localeStore = useLocaleStore()
+const t = localeStore.t
 const showDetail = ref(false)
 const detailTaskId = ref('')
 const focusedIndex = ref(-1)
@@ -16,18 +19,18 @@ onMounted(() => {
   console.log('Keyboard navigation initialized')
 })
 
-const filterGroups: { label: string; value: TaskFilterType; icon: string; count: () => number }[] = [
-  { label: 'Today', value: 'today', icon: 'T', count: () => taskStore.todayTasks.length },
-  { label: 'Upcoming', value: 'upcoming', icon: 'U', count: () => taskStore.upcomingTasks.length },
-  { label: 'Week', value: 'week', icon: 'W', count: () => taskStore.weekTasks.length },
-  { label: 'All', value: 'all', icon: 'A', count: () => taskStore.taskList.length },
-  { label: 'Done', value: 'completed', icon: 'D', count: () => taskStore.completedTasks.length },
-]
+const filterGroups = computed(() => [
+  { label: t('filter.today'), value: 'today' as TaskFilterType, icon: 'T', count: () => taskStore.todayTasks.length },
+  { label: t('filter.upcoming'), value: 'upcoming' as TaskFilterType, icon: 'U', count: () => taskStore.upcomingTasks.length },
+  { label: t('filter.week'), value: 'week' as TaskFilterType, icon: 'W', count: () => taskStore.weekTasks.length },
+  { label: t('filter.all'), value: 'all' as TaskFilterType, icon: 'A', count: () => taskStore.taskList.length },
+  { label: t('filter.completed'), value: 'completed' as TaskFilterType, icon: 'D', count: () => taskStore.completedTasks.length },
+])
 
 function setFilter(f: TaskFilterType) { taskStore.currentFilter = f }
 function priorityColor(p?: TaskPriority): string { switch(p) { case 'urgent': return '#FF4444'; case 'high': return '#F56C6C'; case 'medium': return '#E6A23C'; case 'low': return '#67C23A'; default: return '#8b8b9e' } }
 function priorityText(p?: TaskPriority): string { switch(p) { case 'urgent': return 'P1'; case 'high': return 'P2'; case 'medium': return 'P3'; case 'low': return 'P4'; default: return '' } }
-function statusText(s: TaskStatus): string { switch(s) { case 'todo': return 'To Do'; case 'doing': return 'Doing'; case 'done': return 'Done'; default: return '' } }
+function statusText(s: TaskStatus): string { switch(s) { case 'todo': return t('status.todo'); case 'doing': return t('status.doing'); case 'done': return t('status.done'); default: return '' } }
 
 async function toggleDone(task: Task) {
   const newStatus: TaskStatus = task.status === 'done' ? 'todo' : 'done'
@@ -100,7 +103,7 @@ async function handleKeydown(e: KeyboardEvent) {
     e.preventDefault()
     const task = tasks[focusedIndex.value]
     console.log('Delete/Backspace: deleting task', focusedIndex.value, task.title)
-    if (confirm(`确定要删除任务"${task.title}"吗？`)) {
+    if (confirm(`${localeStore.t('common.confirmDelete').replace('{title}', task.title)}`)) {
       taskStore.deleteTask(task.id)
       focusedIndex.value = Math.max(0, focusedIndex.value - 1)
     }
@@ -143,9 +146,9 @@ async function importJSON(e: Event) {
   <div class="task-list-view">
     <aside class="task-sidebar">
       <div class="sidebar-stats">
-        <div class="stat-item"><span class="stat-num">{{ stats.total }}</span><span class="stat-label">Total</span></div>
-        <div class="stat-item"><span class="stat-num stat-num--doing">{{ stats.doing }}</span><span class="stat-label">Doing</span></div>
-        <div class="stat-item"><span class="stat-num stat-num--done">{{ stats.done }}</span><span class="stat-label">Done</span></div>
+        <div class="stat-item"><span class="stat-num">{{ stats.total }}</span><span class="stat-label">{{ t('common.total') }}</span></div>
+        <div class="stat-item"><span class="stat-num stat-num--doing">{{ stats.doing }}</span><span class="stat-label">{{ t('common.doing') }}</span></div>
+        <div class="stat-item"><span class="stat-num stat-num--done">{{ stats.done }}</span><span class="stat-label">{{ t('common.done') }}</span></div>
       </div>
       <div class="sidebar-filters">
         <div v-for="g in filterGroups" :key="g.value" class="filter-item" :class="{'filter-item--active': taskStore.currentFilter === g.value}" @click="setFilter(g.value)">
@@ -155,43 +158,43 @@ async function importJSON(e: Event) {
         </div>
       </div>
       <div class="sidebar-sections">
-        <div class="section-header">Sections</div>
+        <div class="section-header">{{ t('sections.title') }}</div>
         <div v-for="s in taskStore.projectSections" :key="s.id" class="section-item">{{ s.name }}</div>
         <div class="section-add">
-          <el-input v-model="newSectionName" size="small" placeholder="New section..." @keyup.enter="addSection" />
+          <el-input v-model="newSectionName" size="small" :placeholder="t('sections.newPlaceholder')" @keyup.enter="addSection" />
         </div>
       </div>
-      <div class="sidebar-search"><el-input v-model="taskStore.searchQuery" placeholder="Search..." clearable size="small" /></div>
+      <div class="sidebar-search"><el-input v-model="taskStore.searchQuery" :placeholder="t('common.search') + '...'" clearable size="small" /></div>
       <div class="sidebar-actions">
-        <el-button size="small" text @click="exportJSON">Export JSON</el-button>
-        <el-button size="small" text @click="exportCSV">Export CSV</el-button>
-        <label class="import-label"><el-button size="small" text>Import JSON</el-button><input type="file" accept=".json" @change="importJSON" class="import-file" /></label>
+        <el-button size="small" text @click="exportJSON">{{ t('export.json') }}</el-button>
+        <el-button size="small" text @click="exportCSV">{{ t('export.csv') }}</el-button>
+        <label class="import-label"><el-button size="small" text>{{ t('export.importJson') }}</el-button><input type="file" accept=".json" @change="importJSON" class="import-file" /></label>
       </div>
     </aside>
 
     <main class="task-content">
       <!-- Batch action bar -->
       <div v-if="taskStore.selectedTaskIds.size > 0" class="batch-bar">
-        <span class="batch-count">{{ taskStore.selectedTaskIds.size }} selected</span>
-        <el-button size="small" @click="taskStore.batchUpdateStatus('todo')">To Do</el-button>
-        <el-button size="small" @click="taskStore.batchUpdateStatus('doing')">Doing</el-button>
-        <el-button size="small" @click="taskStore.batchUpdateStatus('done')">Done</el-button>
+        <span class="batch-count">{{ taskStore.selectedTaskIds.size }} {{ t('common.selected') }}</span>
+        <el-button size="small" @click="taskStore.batchUpdateStatus('todo')">{{ t('status.todo') }}</el-button>
+        <el-button size="small" @click="taskStore.batchUpdateStatus('doing')">{{ t('status.doing') }}</el-button>
+        <el-button size="small" @click="taskStore.batchUpdateStatus('done')">{{ t('status.done') }}</el-button>
         <el-dropdown @command="(v: string) => taskStore.batchSetPriority(v as TaskPriority)">
-          <el-button size="small">Priority</el-button>
-          <template #dropdown><el-dropdown-menu><el-dropdown-item command="urgent">P1 Urgent</el-dropdown-item><el-dropdown-item command="high">P2 High</el-dropdown-item><el-dropdown-item command="medium">P3 Medium</el-dropdown-item><el-dropdown-item command="low">P4 Low</el-dropdown-item></el-dropdown-menu></template>
+          <el-button size="small">{{ t('task.priority') }}</el-button>
+          <template #dropdown><el-dropdown-menu><el-dropdown-item command="urgent">{{ t('priority.urgent') }}</el-dropdown-item><el-dropdown-item command="high">{{ t('priority.high') }}</el-dropdown-item><el-dropdown-item command="medium">{{ t('priority.medium') }}</el-dropdown-item><el-dropdown-item command="low">{{ t('priority.low') }}</el-dropdown-item></el-dropdown-menu></template>
         </el-dropdown>
-        <el-button size="small" type="danger" @click="taskStore.batchDelete()">Delete</el-button>
-        <el-button size="small" text @click="taskStore.clearSelection()">Cancel</el-button>
+        <el-button size="small" type="danger" @click="taskStore.batchDelete()">{{ t('common.delete') }}</el-button>
+        <el-button size="small" text @click="taskStore.clearSelection()">{{ t('common.cancel') }}</el-button>
       </div>
 
       <div class="content-header">
         <h2 class="content-title">{{ filterGroups.find(g => g.value === taskStore.currentFilter)?.label || 'All' }}</h2>
         <div class="content-actions">
-          <el-button size="small" text @click="taskStore.selectAllVisible()">Select All</el-button>
-          <el-button size="small" text @click="taskStore.undo()" :disabled="taskStore.undoStack.length === 0">Undo</el-button>
-          <el-button size="small" text @click="taskStore.redo()" :disabled="taskStore.redoStack.length === 0">Redo</el-button>
+          <el-button size="small" text @click="taskStore.selectAllVisible()">{{ t('common.selectAll') }}</el-button>
+          <el-button size="small" text @click="taskStore.undo()" :disabled="taskStore.undoStack.length === 0">{{ t('common.undo') }}</el-button>
+          <el-button size="small" text @click="taskStore.redo()" :disabled="taskStore.redoStack.length === 0">{{ t('common.redo') }}</el-button>
           <el-select v-model="taskStore.currentSort" size="small" style="width:130px">
-            <el-option label="Created" value="createdAt" /><el-option label="Due Date" value="dueDate" /><el-option label="Priority" value="priority" /><el-option label="Status" value="status" /><el-option label="Order" value="order" />
+            <el-option :label="t('sort.created')" value="createdAt" /><el-option :label="t('sort.dueDate')" value="dueDate" /><el-option :label="t('sort.priority')" value="priority" /><el-option :label="t('sort.status')" value="status" /><el-option :label="t('sort.order')" value="order" />
           </el-select>
         </div>
       </div>
@@ -221,7 +224,7 @@ async function importJSON(e: Event) {
               <el-tag :type="task.status === 'done' ? 'success' : task.status === 'doing' ? 'warning' : 'info'" size="small">{{ statusText(task.status) }}</el-tag>
               <span v-if="task.dueDate" class="task-card__due">{{ task.dueDate }}</span>
               <span v-if="task.assignee" class="task-card__assignee">{{ task.assignee }}</span>
-              <span v-if="task.children?.length" class="task-card__subtasks">{{ task.children.length }} subtasks</span>
+              <span v-if="task.children?.length" class="task-card__subtasks">{{ task.children.length }} {{ t('task.subtasks') }}</span>
               <span v-if="task.totalTrackedTime" class="task-card__time">{{ Math.floor(task.totalTrackedTime / 60000) }}m</span>
               <span v-if="task.recurring?.type !== 'none' && task.recurring" class="task-card__recurring">↻</span>
             </div>
@@ -230,10 +233,10 @@ async function importJSON(e: Event) {
           </div>
         </div>
       </div>
-      <div v-else class="task-empty"><p>No tasks</p><p class="task-empty__hint">Press Q to quick add, or convert a mindmap node</p></div>
+      <div v-else class="task-empty"><p>{{ t('task.noTasksEmpty') }}</p><p class="task-empty__hint">{{ t('task.noTasksHint') }}</p></div>
     </main>
 
-    <el-drawer v-model="showDetail" title="Task Details" direction="rtl" size="400px">
+    <el-drawer v-model="showDetail" :title="t('task.taskDetails')" direction="rtl" size="400px">
       <template v-if="drawerTask"><TaskDetailPanel :task="drawerTask" @status-change="onDetailStatusChange" @update="updateField" /></template>
     </el-drawer>
   </div>

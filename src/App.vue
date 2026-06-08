@@ -8,6 +8,7 @@ import { useSearchStore } from '@/stores/search'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import QuickAdd from '@/components/QuickAdd.vue'
+import KeyboardShortcuts from '@/components/KeyboardShortcuts.vue'
 import { useThemeStore, type Theme } from '@/stores/theme'
 import { useLocaleStore, type Locale } from '@/stores/locale'
 import { ElMessage } from 'element-plus'
@@ -25,6 +26,7 @@ const t = localeStore.t
 useKeyboardShortcuts()
 
 const showNewProjectDialog = ref(false)
+const showShortcuts = ref(false)
 const newProjectName = ref('')
 const selectedTemplate = ref('tpl_blank')
 const builtinTemplates = projectStore.getBuiltinTemplates()
@@ -79,6 +81,11 @@ function cycleTheme() { showThemeDropdown.value = !showThemeDropdown.value }
 function selectTheme(theme: Theme) { themeStore.setTheme(theme); showThemeDropdown.value = false }
 function closeThemeDropdown(e: MouseEvent) { const target = e.target as HTMLElement; if (!target.closest('.theme-switcher') && !target.closest('.locale-switcher')) showThemeDropdown.value = false }
 onMounted(() => { document.addEventListener('click', closeThemeDropdown) })
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    const target = e.target as HTMLElement
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
+    if (e.key === '?') { e.preventDefault(); showShortcuts.value = !showShortcuts.value }
+  })
 
 async function deleteProject(projectId: string) {
   if (projectStore.projectList.length <= 1) { ElMessage.warning(t('common.keepAtLeastOne')); return }
@@ -170,6 +177,7 @@ function toggleLocale() {
     </Teleport>
     <GlobalSearch />
     <QuickAdd />
+    <KeyboardShortcuts :isOpen="showShortcuts" @close="showShortcuts = false" />
   </div>
 </template>
 

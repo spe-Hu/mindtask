@@ -19,6 +19,7 @@ const mindmapStore = useMindmapStore()
 const taskStore = useTaskStore()
 const themeStore = useThemeStore()
 const localeStore = useLocaleStore()
+const t = localeStore.t
 
 const mindmapEl = ref<HTMLElement | null>(null)
 const selectedNodeId = ref('')
@@ -41,21 +42,21 @@ const showTaskDetail = ref(false)
 const detailTaskId = ref('')
 
 /** 布局选项 */
-const layouts: { label: string; value: MindMapLayout }[] = [
-  { label: '逻辑结构', value: 'logicalStructure' },
-  { label: '思维导图', value: 'mindMap' },
-  { label: '目录组织', value: 'catalogOrganization' },
-  { label: '组织结构', value: 'organizationStructure' },
-]
+const layouts = computed(() => [
+  { label: localeStore.t('mindmap.layoutLogical'), value: 'logicalStructure' as MindMapLayout },
+  { label: localeStore.t('mindmap.layoutMindMap'), value: 'mindMap' as MindMapLayout },
+  { label: localeStore.t('mindmap.layoutCatalog'), value: 'catalogOrganization' as MindMapLayout },
+  { label: localeStore.t('mindmap.layoutOrg'), value: 'organizationStructure' as MindMapLayout },
+])
 
 /** 主题选项 */
-const themes: { label: string; value: MindMapTheme }[] = [
-  { label: '默认', value: 'default' },
-  { label: '经典', value: 'classic' },
-  { label: '深色', value: 'dark' },
-  { label: '简洁', value: 'simple' },
-  { label: '多彩', value: 'classic4' },
-]
+const themes = computed(() => [
+  { label: localeStore.t('mindmap.themeDefault'), value: 'default' as MindMapTheme },
+  { label: localeStore.t('mindmap.themeClassic'), value: 'classic' as MindMapTheme },
+  { label: localeStore.t('mindmap.themeDark'), value: 'dark' as MindMapTheme },
+  { label: localeStore.t('mindmap.themeSimple'), value: 'simple' as MindMapTheme },
+  { label: localeStore.t('mindmap.themeColorful'), value: 'classic4' as MindMapTheme },
+])
 
 /** SimpleMindMap 实例引用 */
 const mindMapInstance = shallowRef<any>(null)
@@ -170,7 +171,7 @@ function initMindMap(el: HTMLElement, hasData: boolean) {
     registerMindmapThemes(MindMap)
 
     const data = hasData ? mindmapStore.currentData : {
-      data: { text: '中心主题' },
+      data: { text: localeStore.t('mindmap.centerTopic') },
       children: []
     }
 
@@ -318,12 +319,12 @@ function hideContextMenu() {
 function onConvertToTask() {
   hideContextMenu()
   if (!selectedNodeId.value) {
-    ElMessage.warning('请先选中一个节点')
+    ElMessage.warning(localeStore.t('mindmap.selectNodeFirst'))
     return
   }
   // 检查是否已经是任务
   if (taskStore.getTaskByNodeId(selectedNodeId.value)) {
-    ElMessage.info('该节点已经是任务')
+    ElMessage.info(localeStore.t('mindmap.alreadyTask'))
     showTaskDetail.value = true
     detailTaskId.value = selectedNodeId.value
     return
@@ -351,7 +352,7 @@ function onToolbarConvertToTask() {
 /** 提交转任务 */
 async function submitConvert() {
   if (!convertForm.value.title.trim()) {
-    ElMessage.warning('请输入任务标题')
+    ElMessage.warning(localeStore.t('mindmap.enterTitle'))
     return
   }
 
@@ -385,7 +386,7 @@ async function submitConvert() {
   mindmapStore.convertNodeToTask(selectedNodeId.value, metadata)
 
   showConvertDialog.value = false
-  ElMessage.success('已转为任务')
+  ElMessage.success(localeStore.t('mindmap.convertedToTask'))
 }
 
 /** 查看节点对应的任务详情 */
@@ -403,14 +404,14 @@ function openTaskFromSidebar(taskId: string) {
   showTaskDetail.value = true
 }
 
-/** 将任务节点转回普通节点 */
+/** 将任务节点{{ t("task.revertToNode") }} */
 async function onRevertNode() {
   hideContextMenu()
   if (!selectedNodeId.value) return
 
   await taskStore.revertToNode(selectedNodeId.value)
   mindmapStore.revertNodeFromTask(selectedNodeId.value)
-  ElMessage.success('已转回普通节点')
+  ElMessage.success(localeStore.t('mindmap.revertedToNode'))
 }
 
 /** 切换布局 */
@@ -519,7 +520,7 @@ type TaskStatus = import('@/types/task').TaskStatus
     <!-- 工具栏 -->
     <div class="toolbar">
       <div class="toolbar-group">
-        <span class="toolbar-label">布局</span>
+        <span class="toolbar-label">{{ t("mindmap.layout") }}</span>
         <el-select
           :model-value="mindmapStore.currentLayout"
           @change="onLayoutChange"
@@ -535,7 +536,7 @@ type TaskStatus = import('@/types/task').TaskStatus
         </el-select>
       </div>
       <div class="toolbar-group">
-        <span class="toolbar-label">主题</span>
+        <span class="toolbar-label">{{ t("mindmap.theme") }}</span>
         <el-select
           :model-value="mindmapStore.currentTheme"
           @change="onThemeChange"
@@ -559,7 +560,7 @@ type TaskStatus = import('@/types/task').TaskStatus
           @click="isSelectedNodeTask ? onViewTaskDetail() : onToolbarConvertToTask()"
         >
           <el-icon><CircleCheck /></el-icon>
-          {{ isSelectedNodeTask ? '查看任务' : '转为任务' }}
+          {{ isSelectedNodeTask ? t('task.viewTask') : t('task.convertToTask') }}
         </el-button>
         <el-button
           v-if="isSelectedNodeTask"
@@ -568,13 +569,13 @@ type TaskStatus = import('@/types/task').TaskStatus
           @click="onRevertNode"
         >
           <el-icon><RefreshLeft /></el-icon>
-          转回节点
+          {{ t("task.revertToNode") }}
         </el-button>
       </div>
       <div class="toolbar-spacer" />
       <div class="toolbar-group">
         <el-tag size="small" type="info">
-          任务: {{ taskStore.taskList.length }}
+          {{ t("mindmap.tasks") }}: {{ taskStore.taskList.length }}
         </el-tag>
       </div>
     </div>
@@ -586,7 +587,7 @@ type TaskStatus = import('@/types/task').TaskStatus
       <!-- 右侧常驻任务面板 -->
       <aside class="task-sidebar">
         <div class="task-sidebar__header">
-          <span class="task-sidebar__title">任务列表</span>
+          <span class="task-sidebar__title">{{ t("task.taskList") }}</span>
           <el-tag size="small" type="info">{{ taskStore.taskList.length }}</el-tag>
         </div>
         <div class="task-sidebar__list">
@@ -606,7 +607,7 @@ type TaskStatus = import('@/types/task').TaskStatus
             </div>
           </div>
           <div v-if="taskStore.taskList.length === 0" class="task-sidebar__empty">
-            暂无任务，选中节点后点击"转为任务"
+            {{ t("task.noTaskHint") }}
           </div>
         </div>
       </aside>
@@ -623,17 +624,17 @@ type TaskStatus = import('@/types/task').TaskStatus
         <template v-if="!taskStore.getTaskByNodeId(selectedNodeId)">
           <div class="context-menu-item" @click="onConvertToTask">
             <el-icon><CircleCheck /></el-icon>
-            转为任务
+            {{ t("task.convertToTask") }}
           </div>
         </template>
         <template v-else>
           <div class="context-menu-item" @click="onViewTaskDetail">
             <el-icon><View /></el-icon>
-            查看任务详情
+            {{ t("task.viewTaskDetail") }}
           </div>
           <div class="context-menu-item context-menu-item--danger" @click="onRevertNode">
             <el-icon><RefreshLeft /></el-icon>
-            转回普通节点
+            {{ t("task.revertToNode") }}
           </div>
         </template>
       </div>
@@ -642,48 +643,48 @@ type TaskStatus = import('@/types/task').TaskStatus
     <!-- 转任务对话框 -->
     <el-dialog
       v-model="showConvertDialog"
-      title="转为任务"
+      :title="t('task.convertToTask')"
       width="460px"
       :close-on-click-modal="false"
     >
       <el-form label-position="top">
-        <el-form-item label="标题">
-          <el-input v-model="convertForm.title" placeholder="任务标题" />
+        <el-form-item :label="t('task.title')">
+          <el-input v-model="convertForm.title" :placeholder="t('task.taskTitle')" />
         </el-form-item>
-        <el-form-item label="描述">
+        <el-form-item :label="t('task.description')">
           <el-input
             v-model="convertForm.description"
             type="textarea"
             :rows="3"
-            placeholder="任务描述（可选）"
+            :placeholder="t('task.taskDescription')"
           />
         </el-form-item>
-        <el-form-item label="截止日期">
+        <el-form-item :label="t('task.dueDate')">
           <el-date-picker
             v-model="convertForm.dueDate"
             type="date"
-            placeholder="选择日期"
+            :placeholder="t('task.selectDate')"
             value-format="YYYY-MM-DD"
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="优先级">
+        <el-form-item :label="t('task.priority')">
           <el-select v-model="convertForm.priority" style="width: 100%">
-            <el-option label="高" value="high" />
-            <el-option label="中" value="medium" />
-            <el-option label="低" value="low" />
+            <el-option :label="t('priority.high')" value="high" />
+            <el-option :label="t('priority.medium')" value="medium" />
+            <el-option :label="t('priority.low')" value="low" />
           </el-select>
         </el-form-item>
-        <el-form-item label="负责人">
-          <el-input v-model="convertForm.assignee" placeholder="负责人（可选）" />
+        <el-form-item :label="t('task.assignee')">
+          <el-input v-model="convertForm.assignee" :placeholder="t('task.assigneePlaceholder')" />
         </el-form-item>
-        <el-form-item label="标签（逗号分隔）">
-          <el-input v-model="convertForm.tags" placeholder="如：前端, 紧急" />
+        <el-form-item :label="t('task.tags')">
+          <el-input v-model="convertForm.tags" :placeholder="t('task.tagsPlaceholder')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showConvertDialog = false">取消</el-button>
-        <el-button type="primary" @click="submitConvert">确认转换</el-button>
+        <el-button @click="showConvertDialog = false">{{ t("common.cancel") }}</el-button>
+        <el-button type="primary" @click="submitConvert">{{ t("task.confirmConvert") }}</el-button>
       </template>
     </el-dialog>
 
@@ -699,7 +700,7 @@ type TaskStatus = import('@/types/task').TaskStatus
     >
       <template #header>
         <div class="drawer-header">
-          <span class="drawer-header__title">{{ localeStore.t('task.details') || '任务详情' }}</span>
+          <span class="drawer-header__title">{{ t('task.taskDetails') }}</span>
           <button class="drawer-header__close" @click="showTaskDetail = false" :title="localeStore.t('common.close')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
@@ -715,7 +716,7 @@ type TaskStatus = import('@/types/task').TaskStatus
       </template>
       <template v-else>
         <div style="padding: 24px; text-align: center; color: var(--c-text-3);">
-          未找到任务数据
+          {{ t("task.noTaskData") }}
         </div>
       </template>
     </el-drawer>
