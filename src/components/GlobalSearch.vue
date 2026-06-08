@@ -6,10 +6,13 @@
 import { ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSearchStore } from '@/stores/search'
+import { useLocaleStore } from '@/stores/locale'
 import type { SearchResult } from '@/stores/search'
 
 const router = useRouter()
 const searchStore = useSearchStore()
+const localeStore = useLocaleStore()
+const t = localeStore.t
 
 const searchInput = ref<HTMLInputElement | null>(null)
 
@@ -44,7 +47,7 @@ function handleKeydown(event: KeyboardEvent) {
             ref="searchInput"
             v-model="searchStore.searchQuery"
             type="text"
-            placeholder="搜索任务或思维导图节点..."
+            :placeholder="t('search.placeholder')"
             class="search-input"
             @keydown.enter="handleKeydown"
           />
@@ -55,13 +58,13 @@ function handleKeydown(event: KeyboardEvent) {
         
         <div class="search-results">
           <div v-if="!searchStore.searchQuery.trim()" class="search-empty">
-            <p>输入关键词开始搜索</p>
-            <p class="search-hint">支持搜索任务标题、描述、标签和思维导图节点</p>
+            <p>{{ t("search.startHint") }}</p>
+            <p class="search-hint">{{ t("search.searchDesc") }}</p>
           </div>
           
           <div v-else-if="searchStore.results.length === 0" class="search-empty">
-            <p>未找到相关结果</p>
-            <p class="search-hint">尝试使用不同的关键词</p>
+            <p>{{ t("search.noResults") }}</p>
+            <p class="search-hint">{{ t("search.tryDifferent") }}</p>
           </div>
           
           <div v-else class="search-list">

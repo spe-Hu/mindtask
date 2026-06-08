@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useTaskStore } from '@/stores/task'
+import { useLocaleStore } from '@/stores/locale'
 import type { TaskPriority } from '@/types/task'
 
 const taskStore = useTaskStore()
+const localeStore = useLocaleStore()
+const t = localeStore.t
 onMounted(() => { taskStore.loadFromDB() })
 
 const stats = computed(() => taskStore.getTaskStats())
@@ -16,16 +19,16 @@ function priorityColor(p: TaskPriority): string { switch(p) { case 'urgent': ret
 
 <template>
   <div class="dashboard-view">
-    <div class="dashboard-header"><h2 class="dashboard-title">Dashboard</h2></div>
+    <div class="dashboard-header"><h2 class="dashboard-title">{{ t('nav.dashboard') }}</h2></div>
     <div class="overview-cards">
-      <div class="stat-card"><div class="stat-card__value">{{ stats.total }}</div><div class="stat-card__label">Total Tasks</div></div>
-      <div class="stat-card"><div class="stat-card__value" style="color:var(--c-warning)">{{ stats.doing }}</div><div class="stat-card__label">In Progress</div></div>
-      <div class="stat-card"><div class="stat-card__value" style="color:var(--c-success)">{{ stats.done }}</div><div class="stat-card__label">Completed</div></div>
-      <div class="stat-card"><div class="stat-card__value">{{ completionRate }}%</div><div class="stat-card__label">Completion Rate</div></div>
+      <div class="stat-card"><div class="stat-card__value">{{ stats.total }}</div><div class="stat-card__label">{{ t('common.totalTasks') }}</div></div>
+      <div class="stat-card"><div class="stat-card__value" style="color:var(--c-warning)">{{ stats.doing }}</div><div class="stat-card__label">{{ t('status.doing') }}</div></div>
+      <div class="stat-card"><div class="stat-card__value" style="color:var(--c-success)">{{ stats.done }}</div><div class="stat-card__label">{{ t('status.done') }}</div></div>
+      <div class="stat-card"><div class="stat-card__value">{{ completionRate }}%</div><div class="stat-card__label">{{ t('dashboard.completionRate') }}</div></div>
     </div>
     <div class="detail-sections">
       <div class="detail-card">
-        <h3 class="detail-card__title">Priority Distribution</h3>
+        <h3 class="detail-card__title">{{ t('dashboard.priorityDistribution') }}</h3>
         <div class="priority-bars">
           <div class="priority-bar" v-for="p in (['urgent','high','medium','low'] as TaskPriority[])" :key="p">
             <div class="priority-bar__header"><span class="priority-bar__label">{{ p }}</span><span class="priority-bar__count">{{ priorityStats[p] }}</span></div>
@@ -34,20 +37,20 @@ function priorityColor(p: TaskPriority): string { switch(p) { case 'urgent': ret
         </div>
       </div>
       <div class="detail-card">
-        <h3 class="detail-card__title">Status Distribution</h3>
+        <h3 class="detail-card__title">{{ t('dashboard.statusDistribution') }}</h3>
         <div class="status-chart">
-          <div class="status-item"><div class="status-item__bar status-item__bar--todo" :style="{ height: Math.max(stats.todo * 10, 4) + 'px' }"></div><div class="status-item__label">To Do</div><div class="status-item__count">{{ stats.todo }}</div></div>
-          <div class="status-item"><div class="status-item__bar status-item__bar--doing" :style="{ height: Math.max(stats.doing * 10, 4) + 'px' }"></div><div class="status-item__label">Doing</div><div class="status-item__count">{{ stats.doing }}</div></div>
-          <div class="status-item"><div class="status-item__bar status-item__bar--done" :style="{ height: Math.max(stats.done * 10, 4) + 'px' }"></div><div class="status-item__label">Done</div><div class="status-item__count">{{ stats.done }}</div></div>
+          <div class="status-item"><div class="status-item__bar status-item__bar--todo" :style="{ height: Math.max(stats.todo * 10, 4) + 'px' }"></div><div class="status-item__label">{{ t('status.todo') }}</div><div class="status-item__count">{{ stats.todo }}</div></div>
+          <div class="status-item"><div class="status-item__bar status-item__bar--doing" :style="{ height: Math.max(stats.doing * 10, 4) + 'px' }"></div><div class="status-item__label">{{ t('status.doing') }}</div><div class="status-item__count">{{ stats.doing }}</div></div>
+          <div class="status-item"><div class="status-item__bar status-item__bar--done" :style="{ height: Math.max(stats.done * 10, 4) + 'px' }"></div><div class="status-item__label">{{ t('status.done') }}</div><div class="status-item__count">{{ stats.done }}</div></div>
         </div>
       </div>
       <div class="detail-card">
-        <h3 class="detail-card__title">Metrics</h3>
+        <h3 class="detail-card__title">{{ t('dashboard.metrics') }}</h3>
         <div class="metrics-list">
-          <div class="metric-item"><span class="metric-item__label">Overdue</span><span class="metric-item__value" :class="{'metric-item__value--warn': overdueCount > 0}">{{ overdueCount }}</span></div>
-          <div class="metric-item"><span class="metric-item__label">Pending</span><span class="metric-item__value">{{ stats.todo }}</span></div>
-          <div class="metric-item"><span class="metric-item__label">Today Completed</span><span class="metric-item__value">{{ todayCompletedCount }}</span></div>
-          <div class="metric-item"><span class="metric-item__label">Tags</span><span class="metric-item__value">{{ taskStore.allTags.length }}</span></div>
+          <div class="metric-item"><span class="metric-item__label">{{ t('dashboard.overdue') }}</span><span class="metric-item__value" :class="{'metric-item__value--warn': overdueCount > 0}">{{ overdueCount }}</span></div>
+          <div class="metric-item"><span class="metric-item__label">{{ t('status.todo') }}</span><span class="metric-item__value">{{ stats.todo }}</span></div>
+          <div class="metric-item"><span class="metric-item__label">{{ t('dashboard.todayCompleted') }}</span><span class="metric-item__value">{{ todayCompletedCount }}</span></div>
+          <div class="metric-item"><span class="metric-item__label">{{ t('task.tags') }}</span><span class="metric-item__value">{{ taskStore.allTags.length }}</span></div>
         </div>
       </div>
     </div>

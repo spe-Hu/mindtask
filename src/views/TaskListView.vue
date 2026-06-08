@@ -188,7 +188,7 @@ async function importJSON(e: Event) {
       </div>
 
       <div class="content-header">
-        <h2 class="content-title">{{ filterGroups.find(g => g.value === taskStore.currentFilter)?.label || 'All' }}</h2>
+        <h2 class="content-title">{{ filterGroups.find(g => g.value === taskStore.currentFilter)?.label || t('filter.all') }}</h2>
         <div class="content-actions">
           <el-button size="small" text @click="taskStore.selectAllVisible()">{{ t('common.selectAll') }}</el-button>
           <el-button size="small" text @click="taskStore.undo()" :disabled="taskStore.undoStack.length === 0">{{ t('common.undo') }}</el-button>

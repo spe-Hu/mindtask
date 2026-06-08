@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useTaskStore } from '@/stores/task'
+import { useLocaleStore } from '@/stores/locale'
 import type { Task, TaskStatus, TaskPriority } from '@/types/task'
 import TaskDetailPanel from '@/components/task/TaskDetailPanel.vue'
 
 const taskStore = useTaskStore()
+const localeStore = useLocaleStore()
+const t = localeStore.t
 const currentDate = ref(new Date())
 const viewMode = ref<'month'|'week'|'day'>('month')
 const showDetail = ref(false)
@@ -85,7 +88,7 @@ const drawerTask = computed(() => taskStore.getTaskByNodeId(detailTaskId.value))
         </div>
       </div>
     </div>
-    <el-drawer v-model="showDetail" title="Task Details" direction="rtl" size="380px">
+    <el-drawer v-model="showDetail" :title="t('task.details')" direction="rtl" size="380px">
       <template v-if="drawerTask">
         <TaskDetailPanel :task="drawerTask" @status-change="onDetailStatusChange" @update="updateField" />
       </template>

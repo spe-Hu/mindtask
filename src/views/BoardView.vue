@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useTaskStore } from '@/stores/task'
+import { useLocaleStore } from '@/stores/locale'
 import type { Task, TaskStatus, TaskPriority } from '@/types/task'
 import TaskDetailPanel from '@/components/task/TaskDetailPanel.vue'
 
 const taskStore = useTaskStore()
+const localeStore = useLocaleStore()
+const t = localeStore.t
 const showDetail = ref(false)
 const detailTaskId = ref('')
 const draggedTaskId = ref<string | null>(null)
@@ -65,11 +68,11 @@ const drawerTask = computed(() => taskStore.getTaskByNodeId(detailTaskId.value))
 <template>
   <div class="board-view">
     <div class="board-header">
-      <h2 class="board-title">Board</h2>
+      <h2 class="board-title">{{ t('nav.board') }}</h2>
       <div class="board-stats">
-        <span class="board-stat">Total: {{ taskStore.taskList.length }}</span>
-        <span class="board-stat board-stat--doing">Doing: {{ getColumnTasks('doing').length }}</span>
-        <span class="board-stat board-stat--done">Done: {{ getColumnTasks('done').length }}</span>
+        <span class="board-stat">{{ t('common.total') }}: {{ taskStore.taskList.length }}</span>
+        <span class="board-stat board-stat--doing">{{ t('status.doing') }}: {{ getColumnTasks('doing').length }}</span>
+        <span class="board-stat board-stat--done">{{ t('status.done') }}: {{ getColumnTasks('done').length }}</span>
       </div>
     </div>
 
@@ -109,7 +112,7 @@ const drawerTask = computed(() => taskStore.getTaskByNodeId(detailTaskId.value))
       </div>
     </div>
 
-    <el-drawer v-model="showDetail" title="Task Details" direction="rtl" size="380px">
+    <el-drawer v-model="showDetail" :title="t('task.details')" direction="rtl" size="380px">
       <template v-if="drawerTask"><TaskDetailPanel :task="drawerTask" @status-change="onDetailStatusChange" @update="updateField" /></template>
     </el-drawer>
   </div>
