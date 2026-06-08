@@ -1,0 +1,352 @@
+import { test, expect } from '@playwright/test';
+
+test.describe('新功能测试', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:5174');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
+  });
+
+  test.describe('多语言支持', () => {
+    test('默认显示中文界面', async ({ page }) => {
+      await expect(page.locator('.app-title')).toHaveText('Todo PM');
+      await expect(page.getByRole('link', { name: '思维导图' }).first()).toBeVisible();
+      await expect(page.getByRole('link', { name: '任务' }).first()).toBeVisible();
+      await expect(page.getByRole('link', { name: '看板' }).first()).toBeVisible();
+    });
+
+    test('可以切换到英文', async ({ page }) => {
+      await page.locator('.locale-btn').click();
+      await page.waitForTimeout(500);
+      
+      await expect(page.getByRole('link', { name: 'Mind Map' }).first()).toBeVisible({ timeout: 5000 });
+      await expect(page.getByRole('link', { name: 'Tasks' }).first()).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Board' }).first()).toBeVisible();
+      await expect(page.locator('.locale-btn')).toContainText('EN/中');
+    });
+
+    test('语言设置持久化', async ({ page }) => {
+      await page.locator('.locale-btn').click();
+      await page.waitForTimeout(500);
+      
+      await expect(page.locator('.locale-btn')).toContainText('EN/中');
+      
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+      
+      await expect(page.getByRole('link', { name: 'Mind Map' }).first()).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('.locale-btn')).toContainText('EN/中');
+    });
+  });
+
+  test.describe('主题切换', () => {
+    test('默认使用 midnight 主题', async ({ page }) => {
+      await expect(page.locator('.theme-btn')).toContainText('午夜蓝');
+    });
+
+    test('可以切换主题', async ({ page }) => {
+      await page.locator('.theme-btn').click();
+      await page.getByText('海洋蓝').first().click();
+      await page.waitForTimeout(300);
+      await expect(page.locator('.theme-btn')).toContainText('海洋蓝');
+    });
+
+    test('所有7个主题都可用', async ({ page }) => {
+      const themes = ['午夜蓝', '海洋蓝', '日落橙', '森林绿', '薰衣草紫', '珊瑚粉', '石墨灰'];
+      
+      for (const theme of themes) {
+        await page.locator('.theme-btn').click();
+        await page.waitForTimeout(200);
+        await page.getByText(theme).first().click();
+        await page.waitForTimeout(300);
+        await expect(page.locator('.theme-btn')).toContainText(theme);
+      }
+    });
+
+    test('主题设置持久化', async ({ page }) => {
+      await page.locator('.theme-btn').click();
+      await page.getByText('森林绿').first().click();
+      await page.waitForTimeout(300);
+      
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+      
+      await expect(page.locator('.theme-btn')).toContainText('森林绿');
+    });
+  });
+
+  test.describe('Markdown 编辑器', () => {
+    test('可以添加 Markdown 描述', async ({ page }) => {
+      await page.getByRole('link', { name: '任务' }).first().click();
+      await page.waitForTimeout(500);
+      
+      await page.keyboard.press('q');
+      await page.waitForSelector('.quickadd-overlay', { timeout: 5000 });
+      
+      const input = page.locator('.quickadd-input');
+      await input.fill('测试任务');
+      await page.waitForTimeout(200);
+      
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('.quickadd-overlay', { state: 'detached', timeout: 5000 });
+      await page.waitForTimeout(1000);
+      
+      // 直接点击任务卡片，不等待抽屉打开
+      const taskCard = page.locator('.task-card').first();
+      await taskCard.click();
+      
+      // 等待抽屉打开
+      await page.waitForSelector('.el-drawer', { state: 'visible', timeout: 5000 });
+      
+      // 点击描述标签
+      const descTab = page.locator('.tab-btn:has-text("描述")');
+      await descTab.click();
+      await page.waitForTimeout(300);
+      
+      const textarea = page.locator('.editor-input textarea');
+      await expect(textarea).toBeVisible({ timeout: 3000 });
+      await textarea.fill('# 标题\n\n这是 **粗体** 和 *斜体* 文本');
+      
+      const previewTab = page.locator('.tab-btn:has-text("预览")');
+      await previewTab.click();
+      await page.waitForTimeout(500);
+      
+      const preview = page.locator('.editor-preview');
+      await expect(preview.locator('h1')).toContainText('标题');
+      await expect(preview.locator('strong')).toContainText('粗体');
+      await expect(preview.locator('em')).toContainText('斜体');
+    });
+
+    test('Markdown 内容持久化', async ({ page }) => {
+      await page.getByRole('link', { name: '任务' }).first().click();
+      await page.waitForTimeout(500);
+      
+      await page.keyboard.press('q');
+      await page.waitForSelector('.quickadd-overlay', { timeout: 5000 });
+      await page.locator('.quickadd-input').fill('带描述的任务');
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('.quickadd-overlay', { state: 'detached', timeout: 5000 });
+      await page.waitForTimeout(1000);
+      
+      await page.locator('.task-card').first().click();
+      await page.waitForSelector('.el-drawer', { state: 'visible', timeout: 5000 });
+      
+      await page.locator('.tab-btn:has-text("描述")').click();
+      await page.waitForTimeout(300);
+      
+      const textarea = page.locator('.editor-input textarea');
+      await expect(textarea).toBeVisible({ timeout: 3000 });
+      await textarea.fill('这是任务描述');
+      await page.waitForTimeout(500);
+      
+      // 关闭抽屉
+      await page.locator('.el-drawer__close-btn').click();
+      await page.waitForTimeout(500);
+      
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+      
+      await page.getByRole('link', { name: '任务' }).first().click();
+      await page.waitForTimeout(500);
+      
+      await page.locator('.task-card').first().click();
+      await page.waitForSelector('.el-drawer', { state: 'visible', timeout: 5000 });
+      await page.locator('.tab-btn:has-text("描述")').click();
+      await page.waitForTimeout(300);
+      
+      await expect(textarea).toHaveValue('这是任务描述');
+    });
+  });
+
+  test.describe('键盘快捷键', () => {
+    test('按 Q 键打开快速添加', async ({ page }) => {
+      await page.keyboard.press('q');
+      await expect(page.locator('.quickadd-overlay')).toBeVisible({ timeout: 5000 });
+    });
+
+    test('上下键导航任务列表', async ({ page }) => {
+      await page.getByRole('link', { name: '任务' }).first().click();
+      await page.waitForTimeout(500);
+      
+      // 创建多个任务
+      for (let i = 1; i <= 3; i++) {
+        await page.keyboard.press('q');
+        await page.waitForSelector('.quickadd-overlay', { timeout: 5000 });
+        await page.locator('.quickadd-input').fill(`任务 ${i}`);
+        await page.keyboard.press('Enter');
+        await page.waitForSelector('.quickadd-overlay', { state: 'detached', timeout: 5000 });
+        await page.waitForTimeout(500);
+      }
+      
+      // 点击 body 确保焦点在窗口上
+      await page.locator('body').click();
+      await page.waitForTimeout(200);
+      
+      // 测试下键导航
+      await page.keyboard.press('ArrowDown');
+      await page.waitForTimeout(300);
+      await expect(page.locator('.task-card--focused').first()).toBeVisible();
+      await expect(page.locator('.task-card--focused .task-card__title')).toContainText('任务 1');
+      
+      await page.keyboard.press('ArrowDown');
+      await page.waitForTimeout(300);
+      await expect(page.locator('.task-card--focused .task-card__title')).toContainText('任务 2');
+      
+      // 测试上键导航
+      await page.keyboard.press('ArrowUp');
+      await page.waitForTimeout(300);
+      await expect(page.locator('.task-card--focused .task-card__title')).toContainText('任务 1');
+    });
+
+    test('空格键切换任务状态', async ({ page }) => {
+      await page.getByRole('link', { name: '任务' }).first().click();
+      await page.waitForTimeout(500);
+      
+      await page.keyboard.press('q');
+      await page.waitForSelector('.quickadd-overlay', { timeout: 5000 });
+      await page.locator('.quickadd-input').fill('测试任务');
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('.quickadd-overlay', { state: 'detached', timeout: 5000 });
+      await page.waitForTimeout(1000);
+      
+      await page.locator('body').click();
+      await page.waitForTimeout(200);
+      
+      await page.keyboard.press('ArrowDown');
+      await page.waitForTimeout(300);
+      
+      // 验证任务已聚焦
+      await expect(page.locator('.task-card--focused').first()).toBeVisible();
+      
+      // 按空格切换状态
+      await page.keyboard.press(' ');
+      await page.waitForTimeout(500);
+      
+      // 验证任务状态已改变
+      const focusedCard = page.locator('.task-card--focused').first();
+      await expect(focusedCard).toHaveClass(/task-card--done/);
+    });
+
+    test('Enter 键打开任务详情', async ({ page }) => {
+      await page.getByRole('link', { name: '任务' }).first().click();
+      await page.waitForTimeout(500);
+      
+      await page.keyboard.press('q');
+      await page.waitForSelector('.quickadd-overlay', { timeout: 5000 });
+      await page.locator('.quickadd-input').fill('测试任务');
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('.quickadd-overlay', { state: 'detached', timeout: 5000 });
+      await page.waitForTimeout(1000);
+      
+      await page.locator('body').click();
+      await page.waitForTimeout(200);
+      
+      await page.keyboard.press('ArrowDown');
+      await page.waitForTimeout(300);
+      
+      // 验证任务已聚焦
+      await expect(page.locator('.task-card--focused').first()).toBeVisible();
+      
+      // 按 Enter 打开详情
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(500);
+      
+      await expect(page.locator('.el-drawer')).toBeVisible();
+    });
+
+    test('Delete/Backspace 键删除任务', async ({ page }) => {
+      await page.getByRole('link', { name: '任务' }).first().click();
+      await page.waitForTimeout(500);
+      
+      await page.keyboard.press('q');
+      await page.waitForSelector('.quickadd-overlay', { timeout: 5000 });
+      await page.locator('.quickadd-input').fill('要删除的任务');
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('.quickadd-overlay', { state: 'detached', timeout: 5000 });
+      await page.waitForTimeout(1000);
+      
+      await page.locator('body').click();
+      await page.waitForTimeout(200);
+      
+      await page.keyboard.press('ArrowDown');
+      await page.waitForTimeout(300);
+      
+      // 验证任务已聚焦
+      await expect(page.locator('.task-card--focused').first()).toBeVisible();
+      await expect(page.locator('.task-card--focused .task-card__title')).toContainText('要删除的任务');
+      
+      // 监听确认对话框
+      page.once('dialog', dialog => dialog.accept());
+      
+      // 按 Delete 键
+      await page.keyboard.press('Delete');
+      await page.waitForTimeout(500);
+      
+      // 验证任务已删除
+      await expect(page.locator('.task-card__title:has-text("要删除的任务")')).not.toBeVisible();
+    });
+
+    test('Ctrl/Cmd+Z 撤销操作', async ({ page }) => {
+      await page.getByRole('link', { name: '任务' }).first().click();
+      await page.waitForTimeout(500);
+      
+      await page.keyboard.press('q');
+      await page.waitForSelector('.quickadd-overlay', { timeout: 5000 });
+      await page.locator('.quickadd-input').fill('撤销测试');
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('.quickadd-overlay', { state: 'detached', timeout: 5000 });
+      await page.waitForTimeout(1000);
+      
+      await page.locator('body').click();
+      await page.waitForTimeout(200);
+      
+      await page.keyboard.press('ArrowDown');
+      await page.waitForTimeout(300);
+      
+      // 验证任务已聚焦
+      await expect(page.locator('.task-card--focused').first()).toBeVisible();
+      await expect(page.locator('.task-card--focused .task-card__title')).toContainText('撤销测试');
+      
+      // 监听确认对话框
+      page.once('dialog', dialog => dialog.accept());
+      
+      // 删除任务
+      await page.keyboard.press('Delete');
+      await page.waitForTimeout(500);
+      
+      // 验证任务已删除
+      await expect(page.locator('.task-card__title:has-text("撤销测试")')).not.toBeVisible();
+      
+      // 撤销操作
+      const isMac = process.platform === 'darwin';
+      await page.keyboard.press(isMac ? 'Meta+z' : 'Control+z');
+      await page.waitForTimeout(500);
+      
+      // 验证任务已恢复
+      await expect(page.locator('.task-card__title:has-text("撤销测试")')).toBeVisible();
+    });
+  });
+
+  test.describe('思维导图键盘导航', () => {
+    test('在思维导图视图中使用方向键导航', async ({ page }) => {
+      await page.getByRole('link', { name: '思维导图' }).first().click();
+      await page.waitForTimeout(1000);
+      
+      await expect(page.locator('.mindmap-container')).toBeVisible();
+      
+      await page.keyboard.press('ArrowRight');
+      await page.waitForTimeout(200);
+      await page.keyboard.press('ArrowDown');
+      await page.waitForTimeout(200);
+      await page.keyboard.press('ArrowLeft');
+      await page.waitForTimeout(200);
+      await page.keyboard.press('ArrowUp');
+      await page.waitForTimeout(200);
+      
+      await expect(page.locator('.mindmap-container')).toBeVisible();
+    });
+  });
+});

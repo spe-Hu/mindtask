@@ -72,8 +72,8 @@ function handleKeydown(event: KeyboardEvent) {
               @click="handleResultClick(result)"
             >
               <div class="search-item-icon">
-                <span v-if="result.type === 'task'">📋</span>
-                <span v-else>🧠</span>
+                <span v-if="result.type === 'task'" class="search-type-icon search-type-icon--task">T</span>
+                <span v-else class="search-type-icon search-type-icon--mind">M</span>
               </div>
               <div class="search-item-content">
                 <div class="search-item-title">{{ result.title }}</div>
@@ -91,147 +91,193 @@ function handleKeydown(event: KeyboardEvent) {
 </template>
 
 <style scoped>
-.search-overlay {
+.global-search {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding-top: 100px;
   z-index: 10000;
+  cursor: pointer;
 }
 
-.search-dialog {
-  background: #1e1e36;
-  border: 1px solid #3a3a5c;
-  border-radius: 12px;
+.search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 100px;
+  z-index: 10000;
+  cursor: pointer;
+}
+
+.global-search__dialog {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
   width: 600px;
-  max-height: 500px;
+  max-width: 90vw;
+  max-height: 70vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-xl);
+  animation: slideUp var(--t-slow) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.search-header {
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.global-search__input-wrapper {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  border-bottom: 1px solid #2d2d44;
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--c-border);
 }
 
-.search-input {
+.global-search__icon {
+  font-size: var(--fs-xl);
+  color: var(--c-text-2);
+  margin-right: var(--s-3);
+}
+
+.global-search__input {
   flex: 1;
-  background: #0f0f1a;
-  border: 1px solid #3a3a5c;
-  border-radius: 6px;
-  padding: 10px 14px;
-  color: #e0e0f0;
-  font-size: 15px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.search-input:focus {
-  border-color: #667eea;
-}
-
-.search-input::placeholder {
-  color: #5a5a78;
-}
-
-.search-close {
-  background: #2d2d44;
+  background: transparent;
   border: none;
-  border-radius: 4px;
-  padding: 6px 10px;
-  color: #8b8b9e;
-  font-size: 12px;
+  outline: none;
+  font-size: var(--fs-lg);
+  color: var(--c-text);
+}
+
+.global-search__input::placeholder {
+  color: var(--c-text-3);
+}
+
+.global-search__close {
+  font-size: var(--fs-sm);
+  color: var(--c-text-3);
+  padding: var(--s-1) var(--s-2);
+  background: var(--c-bg-3);
+  border-radius: var(--r-sm);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--t-fast);
 }
 
-.search-close:hover {
-  background: #3a3a5c;
-  color: #e0e0f0;
+.global-search__close:hover {
+  background: var(--c-bg);
+  color: var(--c-text);
 }
 
-.search-results {
+.global-search__results {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: var(--s-3);
 }
 
-.search-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: #8b8b9e;
-}
-
-.search-empty p {
-  margin: 8px 0;
-}
-
-.search-hint {
-  font-size: 13px;
-  color: #5a5a78;
-}
-
-.search-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.search-item {
+.global-search__result {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 6px;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--t-fast);
+  margin-bottom: var(--s-1);
 }
 
-.search-item:hover {
-  background: rgba(102, 126, 234, 0.12);
+.global-search__result:hover {
+  background: var(--c-surface-hover);
 }
 
-.search-item-icon {
-  font-size: 20px;
+.global-search__result-icon {
+  font-size: var(--fs-lg);
+  color: var(--c-text-2);
   flex-shrink: 0;
 }
 
-.search-item-content {
+.global-search__result-content {
   flex: 1;
   min-width: 0;
 }
 
-.search-item-title {
-  font-size: 14px;
-  color: #e0e0f0;
+.global-search__result-title {
+  font-size: var(--fs-base);
+  color: var(--c-text);
   font-weight: 500;
-  white-space: nowrap;
+  margin-bottom: var(--s-1);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.search-item-desc {
-  font-size: 12px;
-  color: #8b8b9e;
-  margin-top: 4px;
-  white-space: nowrap;
+.global-search__result-meta {
+  font-size: var(--fs-sm);
+  color: var(--c-text-3);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.search-item-type {
-  font-size: 11px;
-  color: #667eea;
-  background: rgba(102, 126, 234, 0.15);
-  padding: 3px 8px;
-  border-radius: 4px;
-  flex-shrink: 0;
+.global-search__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-12) var(--s-6);
+  color: var(--c-text-3);
+  text-align: center;
+}
+
+.global-search__empty-icon {
+  font-size: 48px;
+  margin-bottom: var(--s-4);
+  opacity: 0.5;
+}
+
+.global-search__empty-text {
+  font-size: var(--fs-base);
+}
+
+.global-search__footer {
+  padding: var(--s-3) var(--s-5);
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  gap: var(--s-4);
+  font-size: var(--fs-sm);
+  color: var(--c-text-3);
+}
+
+.global-search__hint {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.global-search__kbd {
+  padding: 2px var(--s-2);
+  background: var(--c-bg-3);
+  border-radius: var(--r-sm);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
 }
 </style>

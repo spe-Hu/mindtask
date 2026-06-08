@@ -1,21 +1,35 @@
 /**
- * IndexedDB 持久化层
- * 用于存储思维导图数据和任务数据，确保刷新后数据不丢失
+ * IndexedDB persistence layer
+ * Stores: mindmaps, tasks, projects, comments, activities, time-entries, sections, board-columns, tags
  */
 
 const DB_NAME = 'todo-pm'
-const DB_VERSION = 2
+const DB_VERSION = 3
 
-/** 思维导图数据存储 */
-const STORE_MINDMAP = 'mindmaps'
-/** 任务数据存储 */
-const STORE_TASKS = 'tasks'
-/** 项目数据存储 */
-const STORE_PROJECTS = 'projects'
+export const STORE_MINDMAP = 'mindmaps'
+export const STORE_TASKS = 'tasks'
+export const STORE_PROJECTS = 'projects'
+export const STORE_COMMENTS = 'comments'
+export const STORE_ACTIVITIES = 'activities'
+export const STORE_TIME_ENTRIES = 'timeEntries'
+export const STORE_SECTIONS = 'sections'
+export const STORE_BOARD_COLUMNS = 'boardColumns'
+export const STORE_TAGS = 'tags'
+
+const ALL_STORES = [
+  STORE_MINDMAP,
+  STORE_TASKS,
+  STORE_PROJECTS,
+  STORE_COMMENTS,
+  STORE_ACTIVITIES,
+  STORE_TIME_ENTRIES,
+  STORE_SECTIONS,
+  STORE_BOARD_COLUMNS,
+  STORE_TAGS,
+]
 
 let dbInstance: IDBDatabase | null = null
 
-/** 打开/创建数据库 */
 function openDB(): Promise<IDBDatabase> {
   if (dbInstance) return Promise.resolve(dbInstance)
 
@@ -24,15 +38,11 @@ function openDB(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = () => {
       const db = request.result
-      if (!db.objectStoreNames.contains(STORE_MINDMAP)) {
-        db.createObjectStore(STORE_MINDMAP, { keyPath: 'id' })
-      }
-      if (!db.objectStoreNames.contains(STORE_TASKS)) {
-        db.createObjectStore(STORE_TASKS, { keyPath: 'id' })
-      }
-      if (!db.objectStoreNames.contains(STORE_PROJECTS)) {
-        db.createObjectStore(STORE_PROJECTS, { keyPath: 'id' })
-      }
+      ALL_STORES.forEach(storeName => {
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.createObjectStore(storeName, { keyPath: 'id' })
+        }
+      })
     }
 
     request.onsuccess = () => {
@@ -44,17 +54,14 @@ function openDB(): Promise<IDBDatabase> {
   })
 }
 
-/** 通用：获取事务中的 store */
 async function getStore(storeName: string, mode: IDBTransactionMode = 'readonly') {
   const db = await openDB()
   const tx = db.transaction(storeName, mode)
   return tx.objectStore(storeName)
 }
 
-/** 保存一条记录（put = 有则更新，无则新增） */
 export async function dbPut(storeName: string, data: Record<string, unknown>): Promise<void> {
   const store = await getStore(storeName, 'readwrite')
-  // 深拷贝以剥离 Vue 响应式 Proxy，避免 IndexedDB DataCloneError
   const plain = JSON.parse(JSON.stringify(data))
   return new Promise((resolve, reject) => {
     const req = store.put(plain)
@@ -63,7 +70,6 @@ export async function dbPut(storeName: string, data: Record<string, unknown>): P
   })
 }
 
-/** 根据 key 获取一条记录 */
 export async function dbGet<T>(storeName: string, key: string): Promise<T | undefined> {
   const store = await getStore(storeName)
   return new Promise((resolve, reject) => {
@@ -73,7 +79,6 @@ export async function dbGet<T>(storeName: string, key: string): Promise<T | unde
   })
 }
 
-/** 获取某个 store 的全部记录 */
 export async function dbGetAll<T>(storeName: string): Promise<T[]> {
   const store = await getStore(storeName)
   return new Promise((resolve, reject) => {
@@ -83,7 +88,6 @@ export async function dbGetAll<T>(storeName: string): Promise<T[]> {
   })
 }
 
-/** 删除一条记录 */
 export async function dbDelete(storeName: string, key: string): Promise<void> {
   const store = await getStore(storeName, 'readwrite')
   return new Promise((resolve, reject) => {
@@ -93,7 +97,6 @@ export async function dbDelete(storeName: string, key: string): Promise<void> {
   })
 }
 
-/** 清空某个 store */
 export async function dbClear(storeName: string): Promise<void> {
   const store = await getStore(storeName, 'readwrite')
   return new Promise((resolve, reject) => {
@@ -103,4 +106,20 @@ export async function dbClear(storeName: string): Promise<void> {
   })
 }
 
-export { STORE_MINDMAP, STORE_TASKS, STORE_PROJECTS }
+export async function dbDeleteMany(storeName: string, keys: string[]): Promise<void> {
+  const store = await getStore(storeName, 'readwrite')
+  return new Promise((resolve, reject) => {
+    const tx = store.transaction
+    keys.forEach(key => store.delete(key))
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+  })
+}
+
+export async function dbQuery<T>(
+  storeName: string,
+  filterFn: (item: T) => boolean
+): Promise<T[]> {
+  const all = await dbGetAll<T>(storeName)
+  return all.filter(filterFn)
+}

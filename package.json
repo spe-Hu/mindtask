@@ -11,6 +11,7 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
     "element-plus": "^2.14.1",
+    "marked": "^18.0.5",
     "pinia": "^3.0.4",
     "simple-mind-map": "^0.14.0-fix.2",
     "unplugin-auto-import": "^21.0.0",
@@ -24,6 +25,8 @@
     "@types/node": "^24.12.3",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/tsconfig": "^0.9.1",
+    "electron": "^42.3.3",
+    "electron-builder": "^26.15.0",
     "typescript": "~6.0.2",
     "vite": "^8.0.12",
     "vue-tsc": "^3.2.8"

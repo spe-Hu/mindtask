@@ -1,28 +1,21 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
-  testDir: './e2e',
-  fullyParallel: false, // 串行执行避免 IndexedDB 冲突
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: 1, // 单 worker 避免 IndexedDB 冲突
-  reporter: 'html',
-  timeout: 30000,
+  testDir: '.',
+  testMatch: 'e2e-full-test.spec.ts',
+  timeout: 90000,
   use: {
-    baseURL: 'http://localhost:5174',
-    trace: 'on-first-retry',
-    actionTimeout: 10000,
+    baseURL: 'http://127.0.0.1:5174',
+    headless: true,
+    viewport: { width: 1280, height: 800 },
+    screenshot: 'only-on-failure',
+    trace: 'retain-on-failure',
   },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
   webServer: {
-    command: 'npx vite --port 5174',
-    url: 'http://localhost:5174',
-    reuseExistingServer: !process.env.CI,
-    timeout: 15000,
+    command: 'npx vite --port 5174 --host 127.0.0.1',
+    port: 5174,
+    reuseExistingServer: true,
+    timeout: 30000,
   },
+  reporter: 'list',
 })

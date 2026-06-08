@@ -1,9 +1,85 @@
-/* 全局样式 - 深色主题，参考 Xmind + Notion 风格 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ============================================
+   ToDo PM - Design System
+   Modern, Clean, Premium
+   ============================================ */
+
+:root {
+  /* Colors - defaults (overridden by theme store) */
+  --c-primary: #3b82f6;
+  --c-primary-hover: #2563eb;
+  --c-primary-light: rgba(59, 130, 246, 0.12);
+  --c-success: #22c55e;
+  --c-success-light: rgba(34, 197, 94, 0.12);
+  --c-warning: #f59e0b;
+  --c-warning-light: rgba(245, 158, 11, 0.12);
+  --c-danger: #ef4444;
+  --c-danger-light: rgba(239, 68, 68, 0.12);
+  --c-info: #06b6d4;
+  --c-info-light: rgba(6, 182, 212, 0.12);
+
+  /* Neutral */
+  --c-bg: #0f172a;
+  --c-bg-2: #1e293b;
+  --c-bg-3: #334155;
+  --c-surface: #1e293b;
+  --c-surface-hover: #273548;
+  --c-border: #334155;
+  --c-border-light: #475569;
+  --c-text: #f8fafc;
+  --c-text-2: #94a3b8;
+  --c-text-3: #64748b;
+
+  /* Mindmap (overridden by theme) */
+  --mindmap-bg: #1e293b;
+  --mindmap-node-bg: #334155;
+  --mindmap-node-text: #f8fafc;
+  --mindmap-line: #475569;
+
+  /* Spacing */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.25);
+  --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.3);
+  --shadow-xl: 0 12px 40px rgb(0 0 0 / 0.35);
+
+  /* Transitions */
+  --t-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-base: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-slow: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Typography */
+  --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+  --mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 18px;
+  --fs-2xl: 20px;
+  --fs-3xl: 24px;
+  --fs-4xl: 28px;
 }
+
+/* Reset */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body, #app {
   height: 100%;
@@ -12,38 +88,123 @@ html, body, #app {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font);
+  font-size: var(--fs-base);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: #0f0f1a;
-  color: #e0e0f0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  transition: background var(--t-slow), color var(--t-slow);
 }
 
-/* Element Plus 深色主题覆盖 */
-.el-menu {
-  border-right: none !important;
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: var(--r-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--c-border-light); }
+
+/* Element Plus overrides */
+.el-menu { border-right: none !important; }
+.el-tag { font-weight: 500; }
+.el-button { font-weight: 500; }
+
+/* Element Plus dark theme overrides */
+.el-dialog {
+  background: var(--c-surface) !important;
+  border: 1px solid var(--c-border) !important;
+}
+.el-dialog__title {
+  color: var(--c-text) !important;
+}
+.el-dialog__body {
+  color: var(--c-text-2) !important;
+}
+.el-form-item__label {
+  color: var(--c-text-2) !important;
+}
+.el-input__wrapper {
+  background: var(--c-bg) !important;
+  box-shadow: 0 0 0 1px var(--c-border) inset !important;
+}
+.el-input__inner {
+  color: var(--c-text) !important;
+}
+.el-textarea__inner {
+  background: var(--c-bg) !important;
+  color: var(--c-text) !important;
+  box-shadow: 0 0 0 1px var(--c-border) inset !important;
+}
+.el-select .el-input__wrapper {
+  background: var(--c-bg) !important;
+}
+.el-select-dropdown {
+  background: var(--c-surface) !important;
+  border: 1px solid var(--c-border) !important;
+}
+.el-select-dropdown__item {
+  color: var(--c-text) !important;
+}
+.el-select-dropdown__item.hover,
+.el-select-dropdown__item:hover {
+  background: var(--c-surface-hover) !important;
+}
+.el-select-dropdown__item.selected {
+  color: var(--c-primary) !important;
+}
+.el-popper.is-light {
+  background: var(--c-surface) !important;
+  border: 1px solid var(--c-border) !important;
+}
+.el-popper.is-light .el-popper__arrow::before {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+}
+.el-drawer {
+  background: var(--c-surface) !important;
+}
+.el-drawer__header {
+  color: var(--c-text) !important;
+}
+.el-date-picker {
+  background: var(--c-surface) !important;
+}
+.el-progress__text {
+  color: var(--c-text-2) !important;
+}
+.el-checkbox__label {
+  color: var(--c-text-2) !important;
+}
+.el-message-box {
+  background: var(--c-surface) !important;
+  border: 1px solid var(--c-border) !important;
+}
+.el-message-box__title {
+  color: var(--c-text) !important;
+}
+.el-message-box__content {
+  color: var(--c-text-2) !important;
 }
 
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Mindmap */
+.mindmap-container svg { background: var(--mindmap-bg) !important; }
+
+/* Utilities */
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn var(--t-base) ease-out; }
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #3a3a5c;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #4a4a6c;
-}
-
-/* 思维导图容器需要黑色背景 */
-.mindmap-container svg {
-  background: transparent !important;
+/* Selection */
+::selection {
+  background: var(--c-primary-light);
+  color: var(--c-text);
 }

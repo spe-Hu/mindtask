@@ -11,9 +11,14 @@ import type { TaskPriority, TaskMetadata } from '@/types/task'
 import type { MindMapLayout, MindMapTheme } from '@/types/mindmap'
 import { CircleCheck, View, RefreshLeft } from '@element-plus/icons-vue'
 import TaskDetailPanel from '@/components/task/TaskDetailPanel.vue'
+import { useThemeStore } from '@/stores/theme'
+
+import { useLocaleStore } from '@/stores/locale'
 
 const mindmapStore = useMindmapStore()
 const taskStore = useTaskStore()
+const themeStore = useThemeStore()
+const localeStore = useLocaleStore()
 
 const mindmapEl = ref<HTMLElement | null>(null)
 const selectedNodeId = ref('')
@@ -54,6 +59,67 @@ const themes: { label: string; value: MindMapTheme }[] = [
 
 /** SimpleMindMap 实例引用 */
 const mindMapInstance = shallowRef<any>(null)
+
+/** MindMap class reference (for re-registering themes on app theme change) */
+let _MindMapClass: any = null
+
+/** Read a CSS variable value */
+function cssVar(name: string, fallback: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+}
+
+/** Register all custom mindmap themes using current app theme CSS variables */
+function registerMindmapThemes(MindMap: any) {
+  const primary = cssVar('--c-primary', '#3b82f6')
+  const bg = cssVar('--c-bg', '#0f172a')
+  const bg2 = cssVar('--c-bg-2', '#1e293b')
+  const bg3 = cssVar('--c-bg-3', '#334155')
+  const surfaceHover = cssVar('--c-surface-hover', '#334155')
+  const border = cssVar('--c-border', '#334155')
+  const borderLight = cssVar('--c-border-light', '#475569')
+  const text = cssVar('--c-text', '#f8fafc')
+  const text2 = cssVar('--c-text-2', '#94a3b8')
+  const text3 = cssVar('--c-text-3', '#64748b')
+
+  MindMap.defineTheme('classic', {
+    root: { fillColor: primary, color: '#fff', borderColor: primary, borderWidth: 0, fontSize: 24, borderRadius: 5 },
+    second: { fillColor: bg2, color: text, borderColor: primary, borderWidth: 1, fontSize: 18, borderRadius: 5 },
+    node: { fillColor: bg3, color: text2, borderColor: border, borderWidth: 1, fontSize: 14, borderRadius: 5 },
+    backgroundColor: bg,
+    lineColor: border,
+    lineWidth: 1,
+  })
+
+  MindMap.defineTheme('dark', {
+    root: { fillColor: primary, color: '#fff', borderColor: primary, borderWidth: 0, fontSize: 24, borderRadius: 5 },
+    second: { fillColor: bg2, color: text, borderColor: borderLight, borderWidth: 1, fontSize: 18, borderRadius: 5 },
+    node: { fillColor: bg3, color: text2, borderColor: border, borderWidth: 1, fontSize: 14, borderRadius: 5 },
+    backgroundColor: bg,
+    lineColor: border,
+    lineWidth: 1,
+  })
+
+  MindMap.defineTheme('simple', {
+    root: { fillColor: 'transparent', color: text, borderColor: 'transparent', borderWidth: 0, fontSize: 22, borderRadius: 0 },
+    second: { fillColor: 'transparent', color: text2, borderColor: 'transparent', borderWidth: 0, fontSize: 16, borderRadius: 0 },
+    node: { fillColor: 'transparent', color: text3, borderColor: 'transparent', borderWidth: 0, fontSize: 14, borderRadius: 0 },
+    backgroundColor: bg,
+    lineColor: border,
+    lineWidth: 1,
+    lineStyle: 'direct',
+  })
+
+  MindMap.defineTheme('classic4', {
+    root: { fillColor: primary, color: '#fff', borderColor: primary, borderWidth: 0, fontSize: 24, borderRadius: 5 },
+    second: { fillColor: bg3, color: text, borderColor: borderLight, borderWidth: 1, fontSize: 18, borderRadius: 5 },
+    node: { fillColor: surfaceHover, color: text2, borderColor: border, borderWidth: 1, fontSize: 14, borderRadius: 5 },
+    backgroundColor: bg,
+    lineColor: border,
+    lineWidth: 2,
+  })
+}
+
+/** MindMap class reference (for re-registering themes on app theme change) */
 
 // 防止同步循环的标志
 let _isSyncingFromMindmap = false
@@ -97,124 +163,11 @@ function initMindMap(el: HTMLElement, hasData: boolean) {
   import('simple-mind-map').then(MindMapModule => {
     const MindMap = MindMapModule.default
 
-    // 注册自定义主题（库只内置了 default，其他主题必须先注册）
-    MindMap.defineTheme('classic', {
-      root: {
-        fillColor: '#549688',
-        color: '#fff',
-        borderColor: '#549688',
-        borderWidth: 0,
-        fontSize: 24,
-        borderRadius: 5,
-      },
-      second: {
-        fillColor: '#e9f7ef',
-        color: '#386b3c',
-        borderColor: '#549688',
-        borderWidth: 1,
-        fontSize: 18,
-        borderRadius: 5,
-      },
-      node: {
-        fillColor: '#fff',
-        color: '#333',
-        borderColor: '#549688',
-        borderWidth: 1,
-        fontSize: 14,
-        borderRadius: 5,
-      },
-      lineColor: '#549688',
-      lineWidth: 1,
-    })
+    // Store reference for re-registering themes later
+    _MindMapClass = MindMap
 
-    MindMap.defineTheme('dark', {
-      root: {
-        fillColor: '#667eea',
-        color: '#fff',
-        borderColor: '#667eea',
-        borderWidth: 0,
-        fontSize: 24,
-        borderRadius: 5,
-      },
-      second: {
-        fillColor: '#2d2d44',
-        color: '#e0e0f0',
-        borderColor: '#667eea',
-        borderWidth: 1,
-        fontSize: 18,
-        borderRadius: 5,
-      },
-      node: {
-        fillColor: '#1e1e36',
-        color: '#b0b0c8',
-        borderColor: '#3a3a5c',
-        borderWidth: 1,
-        fontSize: 14,
-        borderRadius: 5,
-      },
-      backgroundColor: '#0f0f1a',
-      lineColor: '#3a3a5c',
-      lineWidth: 1,
-    })
-
-    MindMap.defineTheme('simple', {
-      root: {
-        fillColor: 'transparent',
-        color: '#333',
-        borderColor: 'transparent',
-        borderWidth: 0,
-        fontSize: 22,
-        borderRadius: 0,
-      },
-      second: {
-        fillColor: 'transparent',
-        color: '#555',
-        borderColor: 'transparent',
-        borderWidth: 0,
-        fontSize: 16,
-        borderRadius: 0,
-      },
-      node: {
-        fillColor: 'transparent',
-        color: '#666',
-        borderColor: 'transparent',
-        borderWidth: 0,
-        fontSize: 14,
-        borderRadius: 0,
-      },
-      lineColor: '#ccc',
-      lineWidth: 1,
-      lineStyle: 'direct',
-    })
-
-    MindMap.defineTheme('classic4', {
-      root: {
-        fillColor: '#667eea',
-        color: '#fff',
-        borderColor: '#667eea',
-        borderWidth: 0,
-        fontSize: 24,
-        borderRadius: 5,
-      },
-      second: {
-        fillColor: '#764ba2',
-        color: '#fff',
-        borderColor: '#764ba2',
-        borderWidth: 1,
-        fontSize: 18,
-        borderRadius: 5,
-      },
-      node: {
-        fillColor: '#f093fb',
-        color: '#fff',
-        borderColor: '#f093fb',
-        borderWidth: 1,
-        fontSize: 14,
-        borderRadius: 5,
-      },
-      lineColor: '#764ba2',
-      lineWidth: 2,
-    })
+    // Register all custom themes using current app theme colors
+    registerMindmapThemes(MindMap)
 
     const data = hasData ? mindmapStore.currentData : {
       data: { text: '中心主题' },
@@ -338,6 +291,7 @@ function refreshTaskNodeStyles() {
 /** 根据优先级获取边框颜色 */
 function getPriorityBorderColor(priority: string): string {
   switch (priority) {
+    case 'urgent': return '#FF4444'
     case 'high': return '#F56C6C'
     case 'medium': return '#E6A23C'
     case 'low': return '#67C23A'
@@ -489,6 +443,63 @@ const isSelectedNodeTask = ref(false)
 const drawerTask = computed(() => {
   if (!detailTaskId.value) return undefined
   return taskStore.getTaskByNodeId(detailTaskId.value)
+})
+
+// 监听应用主题变化，同步思维导图背景颜色和主题
+watch(() => themeStore.currentTheme, (newTheme) => {
+  const root = document.documentElement
+  const colors = themeStore.themes[newTheme]?.colors
+  if (colors) {
+    root.style.setProperty('--mindmap-bg', colors['bg-2'] as string)
+    root.style.setProperty('--mindmap-node-bg', colors['bg-3'] as string)
+    root.style.setProperty('--mindmap-node-text', colors['text'] as string)
+    root.style.setProperty('--mindmap-line', colors['border'] as string)
+  }
+  // 同步思维导图主题到匹配的预设
+  const themeMap: Record<string, MindMapTheme> = {
+    midnight: 'classic', ocean: 'classic', sunset: 'classic4',
+    forest: 'classic', lavender: 'classic4', coral: 'classic4', slate: 'dark'
+  }
+  const mmTheme = themeMap[newTheme]
+  if (mmTheme) {
+    mindmapStore.setTheme(mmTheme)
+    // Re-register mindmap themes with new app colors
+    if (_MindMapClass) {
+      registerMindmapThemes(_MindMapClass)
+    }
+    // Also re-apply on the instance so colors update live
+    if (mindMapInstance.value) {
+      mindMapInstance.value.setTheme(mmTheme)
+    }
+  }
+})
+
+// 监听项目切换
+watch(() => mindmapStore.currentProjectId, async (newProjectId, oldProjectId) => {
+  if (newProjectId && newProjectId !== oldProjectId) {
+    // 重新加载任务列表
+    await taskStore.switchProject(newProjectId)
+    
+    // 重新加载思维导图数据
+    await mindmapStore.loadFromDB()
+    
+    // 更新思维导图实例
+    if (mindMapInstance.value && mindmapStore.currentData) {
+      mindMapInstance.value.setData(mindmapStore.currentData)
+      mindMapInstance.value.setTheme(mindmapStore.currentTheme)
+      mindMapInstance.value.setLayout(mindmapStore.currentLayout)
+      
+      // 重新刷新任务节点样式
+      await nextTick()
+      refreshTaskNodeStyles()
+      
+      // 重新选中根节点以启用方向键导航
+      const rootNode = mindMapInstance.value.renderer?.root
+      if (rootNode) {
+        mindMapInstance.value.execCommand('GO_TARGET_NODE', rootNode)
+      }
+    }
+  }
 })
 
 watch([selectedNodeId, () => taskStore.taskList.length], () => {
@@ -679,16 +690,33 @@ type TaskStatus = import('@/types/task').TaskStatus
     <!-- 任务详情侧滑面板 -->
     <el-drawer
       v-model="showTaskDetail"
-      title="任务详情"
       direction="rtl"
-      size="380px"
+      size="400px"
+      :show-close="false"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
+      class="task-detail-drawer"
     >
+      <template #header>
+        <div class="drawer-header">
+          <span class="drawer-header__title">{{ localeStore.t('task.details') || '任务详情' }}</span>
+          <button class="drawer-header__close" @click="showTaskDetail = false" :title="localeStore.t('common.close')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      </template>
       <template v-if="drawerTask">
         <TaskDetailPanel
           :task="drawerTask"
           @status-change="onTaskStatusChange"
           @update="onTaskFieldUpdate"
+          @close="showTaskDetail = false"
         />
+      </template>
+      <template v-else>
+        <div style="padding: 24px; text-align: center; color: var(--c-text-3);">
+          未找到任务数据
+        </div>
       </template>
     </el-drawer>
   </div>
@@ -696,64 +724,80 @@ type TaskStatus = import('@/types/task').TaskStatus
 
 <style scoped>
 .mindmap-view {
-  position: relative;
-  width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--c-bg);
 }
 
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  background: #1a1a2e;
-  border-bottom: 1px solid #2d2d44;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-5);
+  background: var(--c-bg-2);
+  border-bottom: 1px solid var(--c-border);
   flex-shrink: 0;
-  z-index: 10;
 }
 
 .toolbar-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-3);
 }
 
 .toolbar-label {
-  font-size: 13px;
-  color: #8b8b9e;
+  font-size: var(--fs-sm);
+  color: var(--c-text-2);
+  font-weight: 500;
+}
+
+.toolbar-group :deep(.el-button) {
+  font-size: 12px;
+  padding: 5px 10px;
+  height: 28px;
+}
+
+.toolbar-group :deep(.el-button .el-icon) {
+  font-size: 14px;
+  margin-right: 3px;
+}
+
+.toolbar-group :deep(.el-select .el-input__inner) {
+  font-size: 12px;
 }
 
 .toolbar-divider {
   width: 1px;
   height: 24px;
-  background: #2d2d44;
+  background: var(--c-border);
 }
 
 .toolbar-spacer {
   flex: 1;
 }
 
-/* 主体区域：导图 + 右侧面板 */
 .mindmap-body {
   flex: 1;
   display: flex;
   overflow: hidden;
+  min-height: 0;
 }
 
 .mindmap-container {
   flex: 1;
-  overflow: hidden;
-  min-width: 0;
+  position: relative;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
 }
 
-/* 右侧任务面板 */
 .task-sidebar {
-  width: 240px;
+  width: 260px;
   flex-shrink: 0;
-  background: #16162a;
-  border-left: 1px solid #2d2d44;
+  background: var(--c-bg-2);
+  border-left: 1px solid var(--c-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -763,119 +807,179 @@ type TaskStatus = import('@/types/task').TaskStatus
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  border-bottom: 1px solid #2d2d44;
+  padding: var(--s-4) var(--s-4);
+  border-bottom: 1px solid var(--c-border);
+  flex-shrink: 0;
 }
 
 .task-sidebar__title {
-  font-size: 13px;
+  font-size: var(--fs-lg);
   font-weight: 600;
-  color: #b0b0c8;
+  color: var(--c-text);
 }
 
 .task-sidebar__list {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 0;
+  padding: var(--s-2);
 }
 
 .task-sidebar__item {
-  padding: 8px 12px;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-md);
   cursor: pointer;
-  border-left: 3px solid transparent;
-  transition: background 0.15s;
+  transition: background var(--t-fast);
+  margin-bottom: var(--s-1);
 }
 
 .task-sidebar__item:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.task-sidebar__item--high {
-  border-left-color: #F56C6C;
-}
-
-.task-sidebar__item--medium {
-  border-left-color: #E6A23C;
-}
-
-.task-sidebar__item--low {
-  border-left-color: #67C23A;
+  background: var(--c-surface-hover);
 }
 
 .task-sidebar__item-title {
-  font-size: 13px;
-  color: #e0e0f0;
-  white-space: nowrap;
+  font-size: var(--fs-base);
+  color: var(--c-text);
+  font-weight: 500;
+  margin-bottom: var(--s-1);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .task-sidebar__item-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 2px;
+  gap: var(--s-2);
+  font-size: var(--fs-sm);
 }
 
 .task-sidebar__status {
-  font-size: 11px;
-}
-
-.task-sidebar__status--done {
-  color: #67C23A;
-}
-
-.task-sidebar__status--doing {
-  color: #E6A23C;
+  font-weight: 600;
 }
 
 .task-sidebar__status--todo {
-  color: #8b8b9e;
+  color: var(--c-text-2);
+}
+
+.task-sidebar__status--doing {
+  color: var(--c-warning);
+}
+
+.task-sidebar__status--done {
+  color: var(--c-success);
 }
 
 .task-sidebar__date {
-  font-size: 11px;
-  color: #8b8b9e;
+  color: var(--c-text-3);
 }
 
 .task-sidebar__empty {
-  padding: 24px 12px;
-  font-size: 12px;
-  color: #6b6b80;
+  padding: var(--s-6) var(--s-4);
   text-align: center;
-  line-height: 1.5;
+  color: var(--c-text-3);
+  font-size: var(--fs-base);
 }
 
 /* 右键菜单 */
 .context-menu {
-  position: fixed;
-  z-index: 9999;
-  background: #252540;
-  border: 1px solid #3a3a5c;
-  border-radius: 8px;
-  padding: 4px;
+  position: absolute;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: var(--s-2);
   min-width: 160px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  animation: slideDown var(--t-fast) ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .context-menu-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  font-size: 14px;
-  color: #e0e0f0;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
   cursor: pointer;
-  border-radius: 4px;
-  transition: background 0.15s;
+  transition: all var(--t-fast);
+  color: var(--c-text);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-base);
 }
 
 .context-menu-item:hover {
-  background: rgba(102, 126, 234, 0.15);
+  background: var(--c-primary-light);
+  color: var(--c-primary);
 }
 
-.context-menu-item--danger:hover {
-  background: rgba(245, 108, 108, 0.15);
-  color: #F56C6C;
+.context-menu-item__icon {
+  font-size: var(--fs-lg);
+}
+
+/* Drawer header */
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.drawer-header__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.drawer-header__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--c-text-2);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.drawer-header__close:hover {
+  background: var(--c-danger-light);
+  color: var(--c-danger);
+}
+
+/* Drawer body spacing fix */
+:deep(.task-detail-drawer .el-drawer__body) {
+  padding: 12px 16px;
+  overflow-y: auto;
+}
+
+:deep(.task-detail-drawer .el-drawer__header) {
+  margin-bottom: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .toolbar {
+    flex-wrap: wrap;
+    padding: var(--s-2) var(--s-3);
+    gap: var(--s-2);
+  }
+
+  .toolbar-group {
+    gap: var(--s-2);
+  }
 }
 </style>

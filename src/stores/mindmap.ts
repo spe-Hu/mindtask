@@ -200,6 +200,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
 function getPriorityColor(priority: string): string {
   switch (priority) {
+    case 'urgent': return '#FF4444'
     case 'high': return '#F56C6C'
     case 'medium': return '#E6A23C'
     case 'low': return '#67C23A'

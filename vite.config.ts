@@ -4,6 +4,8 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [vue()],
+  // 使用相对路径，让 WKWebView file:// 协议能正确加载资源
+  base: './',
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

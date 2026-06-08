@@ -1,15 +1,73 @@
 /**
- * 项目管理 Store
- * 管理项目列表、当前选中项目
+ * Project Store with template support
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Project } from '@/types/project'
+import type { Project, ProjectTemplate, TemplateData } from '@/types/project'
 import { dbPut, dbDelete, dbGetAll, STORE_PROJECTS } from '@/utils/db'
 
 function genProjectId(): string {
   return 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9)
 }
+
+const BUILTIN_TEMPLATES: ProjectTemplate[] = [
+  {
+    id: 'tpl_blank',
+    name: 'Blank Project',
+    description: 'Empty project to start fresh',
+    data: { sections: [], boardColumns: [], tags: [] },
+    createdAt: 0,
+  },
+  {
+    id: 'tpl_sprint',
+    name: 'Sprint Board',
+    description: 'Kanban-style sprint with Backlog, In Progress, Review, Done sections',
+    data: {
+      sections: [
+        { id: 'sec_backlog', name: 'Backlog', order: 0 },
+        { id: 'sec_progress', name: 'In Progress', order: 1 },
+        { id: 'sec_review', name: 'Review', order: 2 },
+        { id: 'sec_done', name: 'Done', order: 3 },
+      ],
+      boardColumns: [],
+      tags: [{ name: 'bug', color: '#F56C6C' }, { name: 'feature', color: '#67C23A' }, { name: 'improvement', color: '#E6A23C' }],
+    },
+    createdAt: 0,
+  },
+  {
+    id: 'tpl_personal',
+    name: 'Personal GTD',
+    description: 'Getting Things Done with Inbox, Next Actions, Waiting, Someday sections',
+    data: {
+      sections: [
+        { id: 'sec_inbox', name: 'Inbox', order: 0 },
+        { id: 'sec_next', name: 'Next Actions', order: 1 },
+        { id: 'sec_waiting', name: 'Waiting For', order: 2 },
+        { id: 'sec_someday', name: 'Someday/Maybe', order: 3 },
+      ],
+      boardColumns: [],
+      tags: [{ name: 'personal', color: '#3b82f6' }, { name: 'work', color: '#E6A23C' }, { name: 'urgent', color: '#F56C6C' }],
+    },
+    createdAt: 0,
+  },
+  {
+    id: 'tpl_product',
+    name: 'Product Launch',
+    description: 'Product launch checklist with Research, Design, Development, Marketing sections',
+    data: {
+      sections: [
+        { id: 'sec_research', name: 'Research', order: 0 },
+        { id: 'sec_design', name: 'Design', order: 1 },
+        { id: 'sec_dev', name: 'Development', order: 2 },
+        { id: 'sec_marketing', name: 'Marketing', order: 3 },
+        { id: 'sec_launch', name: 'Launch', order: 4 },
+      ],
+      boardColumns: [],
+      tags: [{ name: 'critical', color: '#FF4444' }, { name: 'nice-to-have', color: '#67C23A' }, { name: 'blocked', color: '#F56C6C' }],
+    },
+    createdAt: 0,
+  },
+]
 
 export const useProjectStore = defineStore('project', () => {
   const projects = ref<Map<string, Project>>(new Map())
@@ -31,11 +89,9 @@ export const useProjectStore = defineStore('project', () => {
     list.forEach(p => newMap.set(p.id, p))
     projects.value = newMap
 
-    // 如果没有项目，创建默认项目
     if (newMap.size === 0) {
-      await createProject('默认项目')
+      await createProject('Default Project')
     } else {
-      // 默认选中第一个项目
       if (!currentProjectId.value && list.length > 0) {
         currentProjectId.value = list.sort((a, b) => a.createdAt - b.createdAt)[0].id
       }
@@ -43,7 +99,7 @@ export const useProjectStore = defineStore('project', () => {
     isLoaded.value = true
   }
 
-  async function createProject(name: string, description?: string): Promise<Project> {
+  async function createProject(name: string, description?: string, templateId?: string): Promise<Project> {
     const project: Project = {
       id: genProjectId(),
       name,
@@ -51,10 +107,17 @@ export const useProjectStore = defineStore('project', () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     }
+    
+    if (templateId) {
+      const template = BUILTIN_TEMPLATES.find(t => t.id === templateId)
+      if (template) {
+        project.templateData = template.data
+      }
+    }
+    
     projects.value.set(project.id, project)
     await dbPut(STORE_PROJECTS, project as unknown as Record<string, unknown>)
 
-    // 如果是第一个项目，自动选中
     if (!currentProjectId.value) {
       currentProjectId.value = project.id
     }
@@ -65,7 +128,6 @@ export const useProjectStore = defineStore('project', () => {
     projects.value.delete(id)
     await dbDelete(STORE_PROJECTS, id)
 
-    // 如果删除的是当前项目，切换到第一个
     if (currentProjectId.value === id) {
       const remaining = projectList.value
       currentProjectId.value = remaining.length > 0 ? remaining[0].id : ''
@@ -85,6 +147,10 @@ export const useProjectStore = defineStore('project', () => {
     currentProjectId.value = id
   }
 
+  function getBuiltinTemplates(): ProjectTemplate[] {
+    return BUILTIN_TEMPLATES
+  }
+
   return {
     projects,
     currentProjectId,
@@ -96,5 +162,6 @@ export const useProjectStore = defineStore('project', () => {
     deleteProject,
     renameProject,
     setCurrentProject,
+    getBuiltinTemplates,
   }
 })

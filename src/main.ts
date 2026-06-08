@@ -1,17 +1,26 @@
-/**
- * 应用入口
- * 注册 Vue3 插件：Pinia 状态管理、Vue Router 路由、Element Plus UI
- */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-import router from './router'
+import 'element-plus/theme-chalk/dark/css-vars.css'
 import App from './App.vue'
+import router from './router'
+import { useThemeStore } from './stores/theme'
+import { useLocaleStore } from './stores/locale'
 import './style.css'
 
 const app = createApp(App)
-app.use(createPinia())
+const pinia = createPinia()
+
+app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
+
+// Initialize theme and locale before mounting
+const themeStore = useThemeStore(pinia)
+const localeStore = useLocaleStore(pinia)
+
+themeStore.loadTheme()
+localeStore.loadLocale()
+
 app.mount('#app')
